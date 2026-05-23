@@ -38,6 +38,7 @@ import argparse
 import html
 import json
 import sys
+import time
 import urllib.error
 import urllib.request
 from datetime import datetime, timezone
@@ -46,9 +47,19 @@ from typing import Any
 
 USER_AGENT = "wrg-portfolio-dashboard/1.0 (+https://github.com/WRG-11/wrg-portfolio)"
 TIMEOUT_SECONDS = 15
+RATE_LIMIT_BACKOFF_SECONDS = 7  # pypistats throttles ~10 req/min; one cool-down is enough
 
 
-def _fetch_json(url: str, *, accept_404: bool = False) -> dict[str, Any] | None:
+def _fetch_json(
+    url: str,
+    *,
+    accept_404: bool = False,
+    retry_429: bool = False,
+) -> dict[str, Any] | None:
+    """GET URL and return parsed JSON. None on 404 when accept_404 is True.
+    When retry_429 is True, one retry after a short cool-down is performed
+    on HTTP 429 (rate limit). pypistats.org imposes ~10 req/min so the
+    cool-down resolves transient throttling without inflating runtime."""
     req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, "Accept": "application/json"})
     try:
         with urllib.request.urlopen(req, timeout=TIMEOUT_SECONDS) as resp:
@@ -56,6 +67,10 @@ def _fetch_json(url: str, *, accept_404: bool = False) -> dict[str, Any] | None:
     except urllib.error.HTTPError as exc:
         if accept_404 and exc.code == 404:
             return None
+        if retry_429 and exc.code == 429:
+            time.sleep(RATE_LIMIT_BACKOFF_SECONDS)
+            with urllib.request.urlopen(req, timeout=TIMEOUT_SECONDS) as resp:
+                return json.loads(resp.read().decode("utf-8"))
         raise
 
 
@@ -127,7 +142,11 @@ def _collect_target(target: dict[str, Any]) -> dict[str, Any]:
             row["errors"].append(f"pypi: {exc.__class__.__name__}")
 
         try:
-            stats = _fetch_json(f"https://pypistats.org/api/packages/{row['pypi_name']}/recent", accept_404=True)
+            stats = _fetch_json(
+                f"https://pypistats.org/api/packages/{row['pypi_name']}/recent",
+                accept_404=True,
+                retry_429=True,
+            )
             if stats and "data" in stats:
                 row["pypi_downloads_month"] = stats["data"].get("last_month")
         except Exception as exc:  # noqa: BLE001
@@ -222,6 +241,7 @@ def _render_row(row: dict[str, Any]) -> str:
         f'<td class="metric">{_fmt_int(row["pypi_downloads_month"])}</td>'
         f'<td class="metric">{_fmt_int(row["gh_stars"])}</td>'
         f'<td class="metric">{_fmt_int(row["gh_forks"])}</td>'
+        f'<td>{html.escape(_fmt_relative_date(row["gh_release_date"]))}</td>'
         f'<td>{html.escape(_fmt_relative_date(row["gh_pushed_at"]))}</td>'
         "</tr>"
     )
@@ -264,6 +284,7 @@ def _render_html(rows: list[dict[str, Any]], generated_at: datetime) -> str:
         <th>Downloads (30d)</th>
         <th>Stars</th>
         <th>Forks</th>
+        <th>Last release</th>
         <th>Last commit</th>
       </tr>
     </thead>
