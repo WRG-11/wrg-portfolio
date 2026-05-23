@@ -18,7 +18,8 @@
     },
     {
       "name": "instinct",
-      "pypi_name": "instinct",
+      "_note": "PyPI dist name (instinct-mcp) differs from GitHub repo name (instinct) -- the plain 'instinct' name was already taken on PyPI when v1.0 shipped, so the package publishes under instinct-mcp. Config drift caught by sentry's 1st commissioning run (DRIFT detected against the wrong package); SB-16 1st canonical 'sentry config drift -- PyPI name != GH name'.",
+      "pypi_name": "instinct-mcp",
       "gh_repo": "WRG-11/instinct"
     }
   ]
