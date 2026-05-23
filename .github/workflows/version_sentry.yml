@@ -30,6 +30,21 @@ jobs:
         with:
           python-version: "3.12"
 
+      # SB note (R89-03 dogfood lesson): on first run / fresh fork the
+      # `version-sentry` label does not exist yet, so `gh issue create
+      # --label version-sentry` fails (exit 1) and no drift issue is
+      # opened. `--force` makes `gh label create` idempotent so this
+      # step is safe to re-run on every workflow invocation.
+      - name: Ensure version-sentry label exists
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh label create version-sentry \
+            --description "Auto-opened by version-sentry workflow when PyPI/GH drift detected" \
+            --color "f29513" \
+            --repo ${{ github.repository }} \
+            --force
+
       - name: Run version sentry
         id: sentry
         env:
