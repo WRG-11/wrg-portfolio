@@ -1,0 +1,25 @@
+{
+  "_comment": "WRG-11 packages the version sentry monitors. Each entry has a PyPI name (the dist name on pypi.org) and a GitHub repo slug. The sentry compares PyPI .info.version against the latest GitHub Release tag (with optional leading 'v' stripped). Drift means one channel was bumped without the other.",
+  "targets": [
+    {
+      "name": "wrg-mcp-server",
+      "pypi_name": "wrg-mcp-server",
+      "gh_repo": "WRG-11/wrg-mcp-server"
+    },
+    {
+      "name": "wrg-rule-lab",
+      "pypi_name": "wrg-rule-lab",
+      "gh_repo": "WRG-11/wrg-rule-lab"
+    },
+    {
+      "name": "wrg-devguard",
+      "pypi_name": "wrg-devguard",
+      "gh_repo": "WRG-11/wrg-devguard"
+    },
+    {
+      "name": "instinct",
+      "pypi_name": "instinct",
+      "gh_repo": "WRG-11/instinct"
+    }
+  ]
+}

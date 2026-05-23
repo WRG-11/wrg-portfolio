@@ -1,0 +1,50 @@
+name: version-sentry
+
+# WRG-11 version sentry -- daily check that PyPI versions match the
+# latest GitHub Release tag for each WRG-11 package. Opens an Issue on
+# this repo when drift is detected.
+#
+# - Cron: daily 06:00 UTC (well after typical EU/TR release windows;
+#   gives 6+ hours for the operator to notice morning).
+# - workflow_dispatch: manual trigger for ad-hoc checks (used during
+#   the initial ship to verify the pipeline works end-to-end).
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  sentry:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run version sentry
+        id: sentry
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python scripts/version_sentry.py \
+            --config config/sentry-targets.json \
+            --json-out sentry-report.json \
+            --create-issue \
+            --issue-repo ${{ github.repository }}
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sentry-report
+          path: sentry-report.json
+          retention-days: 30
