@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>WRG-11 Portfolio</title>
+<style>
+* { box-sizing: border-box }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  max-width: 1100px;
+  margin: 2em auto;
+  padding: 0 1em;
+  color: #24292f;
+  line-height: 1.5;
+}
+h1 { margin-bottom: 0.2em; }
+.lede { color: #57606a; margin-top: 0; }
+table { border-collapse: collapse; width: 100%; margin-top: 1em; }
+th, td { padding: 0.6em 0.8em; border-bottom: 1px solid #eaeef2; text-align: left; vertical-align: top; font-size: 0.95em; }
+th { background: #f6f8fa; font-weight: 600; }
+tr:hover td { background: #fafbfc; }
+.pkg-name { font-weight: 600; }
+.pkg-name a { color: #0969da; text-decoration: none; }
+.pkg-name a:hover { text-decoration: underline; }
+.pkg-desc { color: #57606a; font-size: 0.85em; margin-top: 0.2em; }
+.ver { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.9em; }
+.ok { color: #1a7f37; font-weight: 600; }
+.drift { color: #cf222e; font-weight: 600; }
+.muted { color: #8c959f; }
+.footer { color: #6e7781; font-size: 0.85em; margin-top: 3em; border-top: 1px solid #eaeef2; padding-top: 1em; }
+.footer a { color: #0969da; }
+.metric { font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+  <h1>WRG-11 Portfolio</h1>
+  <p class="lede">Open-source security tooling for AI/LLM defense, detection
+  engineering, threat intelligence, and OSINT. Zero-dependency Python where
+  it makes sense; MIT licensed across the ecosystem.</p>
+
+  <p><strong>Snapshot:</strong> 4 OK | 0 DRIFT | 2 with query errors</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Package</th>
+        <th>PyPI</th>
+        <th>GH Release</th>
+        <th>Status</th>
+        <th>Downloads (30d)</th>
+        <th>Stars</th>
+        <th>Forks</th>
+        <th>Last commit</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td><span class="pkg-name"><a href="https://github.com/WRG-11/wrg-mcp-server">wrg-mcp-server</a></span><div class="pkg-desc">WRG MCP server - exposes WinstonRedGuard tools (governance + research + pulse + breach + ransom + threat-intel + OSINT) to Claude Code and AI agents</div></td><td class="ver">1.0.7</td><td class="ver">1.0.7</td><td><span class="ok">OK</span></td><td class="metric">?</td><td class="metric">0</td><td class="metric">0</td><td>today</td></tr>
+      <tr><td><span class="pkg-name"><a href="https://github.com/WRG-11/wrg-rule-lab">wrg-rule-lab</a></span><div class="pkg-desc">Deterministic rule evaluation engine — local-first Python library, JSON DSL, batch + diff + simulate</div></td><td class="ver">0.1.6</td><td class="ver">0.1.6</td><td><span class="ok">OK</span></td><td class="metric">?</td><td class="metric">0</td><td class="metric">0</td><td>today</td></tr>
+      <tr><td><span class="pkg-name"><a href="https://github.com/WRG-11/wrg-devguard">wrg-devguard</a></span><div class="pkg-desc">Pluggable code-security scanner: secrets, credentials, crypto policy. CLI + GitHub Action.</div></td><td class="ver">0.2.3</td><td class="ver">0.2.3</td><td><span class="ok">OK</span></td><td class="metric">456</td><td class="metric">0</td><td class="metric">0</td><td>today</td></tr>
+      <tr><td><span class="pkg-name"><a href="https://github.com/WRG-11/instinct">instinct</a></span><div class="pkg-desc">Self-learning memory for AI coding agents — MCP server</div></td><td class="ver">1.4.1</td><td class="ver">1.4.1</td><td><span class="ok">OK</span></td><td class="metric">223</td><td class="metric">2</td><td class="metric">3</td><td>today</td></tr>
+    </tbody>
+  </table>
+
+  <p class="footer">
+    Generated 2026-05-23 14:37 UTC by
+    <a href="https://github.com/WRG-11/wrg-portfolio">wrg-portfolio</a>
+    (version-sentry sister). Daily auto-refresh via GitHub Actions cron.
+    Data sources: pypi.org, pypistats.org, api.github.com. No tracking,
+    no JavaScript, no external assets.
+  </p>
+</body>
+</html>

@@ -31,14 +31,34 @@ targets out of sync). Optional `--create-issue` opens a GitHub Issue
 on this repo when drift is found (CI uses this; local runs default to
 report-only).
 
+### dashboard
+
+Single-page HTML snapshot of every WRG-11 package: PyPI version, GitHub
+Release tag, drift status, monthly PyPI downloads, GitHub stars + forks,
+last-commit relative date. No JavaScript, no fonts, no tracking pixels --
+the whole page is one self-contained `index.html`. Served by GitHub Pages
+from the `/docs` folder on `main`; live at
+**https://wrg-11.github.io/wrg-portfolio/** (after Pages is enabled in
+repo Settings -> Pages -> Build from `main` branch `/docs` folder).
+
+- `scripts/dashboard.py` -- the generator (stdlib only).
+- `docs/index.html` -- the rendered page, committed and served.
+- `.github/workflows/dashboard.yml` -- runs daily 07:00 UTC and on
+  manual `workflow_dispatch`. If the rendered page differs from the
+  one on `main`, it commits the new version as
+  `github-actions[bot]`. Permissions: `contents: write`.
+
+Manual regeneration:
+
+    python scripts/dashboard.py --config config/sentry-targets.json --out docs/index.html
+
 ## Roadmap (R89-04+)
 
-- Portfolio dashboard — single-page HTML on GitHub Pages with per-package
-  version, PyPI download count (last 30d via pypistats), GitHub
-  star/fork count, last-commit timestamp, CI status badge. Daily
-  auto-refresh, no JavaScript.
-- Marketplace presence tracker — Anthropic plugin directory + Glama.ai
+- Marketplace presence tracker -- Anthropic plugin directory + Glama.ai
   install/star snapshot, README badge update.
+- Mastodon (infosec.exchange) publisher -- post a one-line announcement
+  when a new GitHub Release ships in any WRG-11 package. Operator
+  approval per post.
 
 ## License
 

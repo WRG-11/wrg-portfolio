@@ -1,0 +1,51 @@
+name: dashboard
+
+# WRG-11 portfolio dashboard -- regenerate docs/index.html daily from
+# upstream PyPI + pypistats + GitHub APIs and commit the result to main.
+# GitHub Pages serves docs/ from main, so a successful run = a refreshed
+# public page within a few minutes.
+#
+# - Cron: daily 07:00 UTC (1h after the sentry cron so that newly-shipped
+#   GitHub Releases catch up before we snapshot).
+# - workflow_dispatch: manual refresh for ad-hoc updates after a release.
+
+on:
+  schedule:
+    - cron: '0 7 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  dashboard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Generate dashboard
+        run: |
+          python scripts/dashboard.py \
+            --config config/sentry-targets.json \
+            --out docs/index.html
+
+      - name: Commit if changed
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [[ -n "$(git status --porcelain docs/index.html)" ]]; then
+            git add docs/index.html
+            git commit -m "dashboard: daily refresh ($(date -u +%Y-%m-%d))"
+            git push origin main
+            echo "dashboard refreshed and committed"
+          else
+            echo "no dashboard changes -- upstream snapshot unchanged"
+          fi
