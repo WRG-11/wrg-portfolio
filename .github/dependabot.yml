@@ -1,0 +1,39 @@
+# Dependabot configuration for wrg-portfolio.
+# This repo is stdlib-only (scripts/*.py have zero external deps),
+# so the pip ecosystem is effectively a no-op until a future requirements.txt
+# lands. The github-actions ecosystem catches the actively used third-party
+# actions in .github/workflows/*.yml.
+#
+# Docs: https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - github-actions
+    commit-message:
+      prefix: "chore(deps)"
+      include: scope
+
+  - package-ecosystem: pip
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:30"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - python
+    commit-message:
+      prefix: "chore(deps)"
+      include: scope

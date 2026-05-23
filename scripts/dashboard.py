@@ -127,6 +127,7 @@ def _collect_target(target: dict[str, Any]) -> dict[str, Any]:
         "gh_description": None,
         "gh_html_url": None,
         "gh_license_spdx": None,
+        "gh_codeql_open": None,
         "drift": False,
         "errors": [],
     }
@@ -175,6 +176,26 @@ def _collect_target(target: dict[str, Any]) -> dict[str, Any]:
         except Exception as exc:  # noqa: BLE001
             row["errors"].append(f"github-release: {exc.__class__.__name__}")
 
+        # Open CodeQL alert count (public repos: works anonymously when
+        # public alerts are enabled; private repos return 403 -- treat
+        # 404/403 as "no public visibility" rather than a hard error).
+        try:
+            alerts = _fetch_json(
+                f"https://api.github.com/repos/{row['gh_repo']}/code-scanning/alerts?state=open&per_page=100",
+                accept_404=True,
+            )
+            if alerts is not None and isinstance(alerts, list):
+                row["gh_codeql_open"] = len(alerts)
+        except urllib.error.HTTPError as exc:
+            if exc.code == 403:
+                # No public access to alerts (private alerts, or CodeQL not
+                # enabled on this repo). Surface as "?" rather than error.
+                pass
+            else:
+                row["errors"].append(f"github-codeql: HTTP{exc.code}")
+        except Exception as exc:  # noqa: BLE001
+            row["errors"].append(f"github-codeql: {exc.__class__.__name__}")
+
     if row["pypi_version"] and row["gh_release_tag"]:
         row["drift"] = (row["pypi_version"] != row["gh_release_tag"])
 
@@ -208,6 +229,8 @@ tr:hover td { background: #fafbfc; }
 .ok { color: #1a7f37; font-weight: 600; }
 .drift { color: #cf222e; font-weight: 600; }
 .muted { color: #8c959f; }
+.alert-zero { color: #1a7f37; font-weight: 600; }
+.alert-some { color: #cf222e; font-weight: 600; }
 .footer { color: #6e7781; font-size: 0.85em; margin-top: 3em; border-top: 1px solid #eaeef2; padding-top: 1em; }
 .footer a { color: #0969da; }
 .metric { font-variant-numeric: tabular-nums; }
@@ -249,12 +272,21 @@ def _render_row(row: dict[str, Any]) -> str:
     if desc:
         name_cell += f'<div class="pkg-desc">{desc}</div>'
 
+    codeql_open = row["gh_codeql_open"]
+    if codeql_open is None:
+        codeql_html = '<span class="muted">?</span>'
+    elif codeql_open == 0:
+        codeql_html = '<span class="alert-zero">0</span>'
+    else:
+        codeql_html = f'<span class="alert-some">{codeql_open}</span>'
+
     return (
         "<tr>"
         f"<td>{name_cell}</td>"
         f'<td class="ver">{html.escape(pypi) if pypi else "<span class=\"muted\">-</span>"}</td>'
         f'<td class="ver">{html.escape(gh) if gh else "<span class=\"muted\">-</span>"}</td>'
         f"<td>{status_html}</td>"
+        f'<td class="metric">{codeql_html}</td>'
         f'<td class="metric">{_fmt_int(row["pypi_downloads_month"])}</td>'
         f'<td class="metric">{_fmt_int(row["gh_stars"])}</td>'
         f'<td class="metric">{_fmt_int(row["gh_forks"])}</td>'
@@ -298,6 +330,7 @@ def _render_html(rows: list[dict[str, Any]], generated_at: datetime) -> str:
         <th>PyPI</th>
         <th>GH Release</th>
         <th>Status</th>
+        <th>CodeQL alerts</th>
         <th>Downloads (30d)</th>
         <th>Stars</th>
         <th>Forks</th>

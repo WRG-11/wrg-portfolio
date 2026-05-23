@@ -1,0 +1,47 @@
+name: self-scan (wrg-devguard)
+
+# Cross-portfolio dogfood: scan this repo with our sister wrg-devguard
+# package -- "the WRG-11 monitoring repo is audited with the WRG-11 security
+# tool." Pattern 18 v1.4 "audit your auditor" sister discipline.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Weekly Monday 05:00 UTC (between CodeQL 04:00 and version-sentry 06:00).
+    - cron: '0 5 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  wrg-devguard:
+    name: self-scan (wrg-devguard on itself)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install wrg-devguard from PyPI
+        run: pip install wrg-devguard
+
+      - name: Scan own source
+        run: |
+          wrg-devguard check \
+            --path . \
+            --fail-on error \
+            --json-out self-scan.json
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: self-scan-report
+          path: self-scan.json
+          retention-days: 14

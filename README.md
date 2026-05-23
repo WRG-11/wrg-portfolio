@@ -3,11 +3,30 @@
 [![Pages](https://img.shields.io/badge/Pages-live-3b82f6?style=flat-square)](https://wrg-11.github.io/wrg-portfolio/)
 [![CI](https://img.shields.io/badge/version--sentry-daily%2006%3A00%20UTC-34D058?style=flat-square)](https://github.com/WRG-11/wrg-portfolio/actions/workflows/version_sentry.yml)
 [![Dashboard](https://img.shields.io/badge/dashboard-daily%2007%3A00%20UTC-34D058?style=flat-square)](https://github.com/WRG-11/wrg-portfolio/actions/workflows/dashboard.yml)
+[![CodeQL](https://github.com/WRG-11/wrg-portfolio/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/WRG-11/wrg-portfolio/actions/workflows/codeql.yml)
+[![self-scan](https://github.com/WRG-11/wrg-portfolio/actions/workflows/self-scan.yml/badge.svg?branch=main)](https://github.com/WRG-11/wrg-portfolio/actions/workflows/self-scan.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 > **Self-hosted health monitor for the WRG-11 open-source ecosystem. Zero external services — daily GitHub Actions cron + stdlib Python + a self-contained HTML dashboard.**
 
 Live dashboard: **[https://wrg-11.github.io/wrg-portfolio/](https://wrg-11.github.io/wrg-portfolio/)**
+
+## What you'll see on the dashboard
+
+A single self-contained HTML page with one row per WRG-11 package. Columns:
+
+| Column | What it shows |
+|---|---|
+| **Package** | Package name + GitHub link + license SPDX chip + short description |
+| **PyPI** | Latest published version on PyPI |
+| **GH Release** | Latest tag from GitHub Releases |
+| **Status** | `OK` (PyPI = GH Release) / `DRIFT` (mismatch) / `?` (query error) |
+| **CodeQL alerts** | Count of open CodeQL security alerts (`0` green; `N` red; `?` private/disabled) |
+| **Downloads (30d)** | Monthly PyPI download count (pypistats.org) |
+| **Stars / Forks** | GitHub repo metrics |
+| **Last release / Last commit** | Relative dates ("2 days ago", "1 month ago") |
+
+Snapshot summary at the top: `N OK | N DRIFT | N with query errors`. Footer notes the generation timestamp and the data sources (pypi.org, pypistats.org, api.github.com). No JavaScript, no fonts, no tracking pixels — the whole page is one ~10KB `index.html`.
 
 ## Why this exists
 
