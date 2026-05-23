@@ -126,6 +126,7 @@ def _collect_target(target: dict[str, Any]) -> dict[str, Any]:
         "gh_pushed_at": None,
         "gh_description": None,
         "gh_html_url": None,
+        "gh_license_spdx": None,
         "drift": False,
         "errors": [],
     }
@@ -161,6 +162,8 @@ def _collect_target(target: dict[str, Any]) -> dict[str, Any]:
                 row["gh_pushed_at"] = repo_info.get("pushed_at")
                 row["gh_description"] = repo_info.get("description")
                 row["gh_html_url"] = repo_info.get("html_url")
+                license_info = repo_info.get("license") or {}
+                row["gh_license_spdx"] = license_info.get("spdx_id") if isinstance(license_info, dict) else None
         except Exception as exc:  # noqa: BLE001
             row["errors"].append(f"github-repo: {exc.__class__.__name__}")
 
@@ -208,6 +211,18 @@ tr:hover td { background: #fafbfc; }
 .footer { color: #6e7781; font-size: 0.85em; margin-top: 3em; border-top: 1px solid #eaeef2; padding-top: 1em; }
 .footer a { color: #0969da; }
 .metric { font-variant-numeric: tabular-nums; }
+.license-chip {
+  display: inline-block;
+  padding: 0.05em 0.5em;
+  margin-left: 0.4em;
+  background: #ddf4ff;
+  color: #0969da;
+  border-radius: 1em;
+  font-size: 0.72em;
+  font-weight: 600;
+  vertical-align: middle;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
 """
 
 
@@ -229,6 +244,8 @@ def _render_row(row: dict[str, Any]) -> str:
     desc = html.escape(row["gh_description"] or row["pypi_summary"] or "")
 
     name_cell = f'<span class="pkg-name"><a href="{html.escape(url)}">{name}</a></span>'
+    if row["gh_license_spdx"]:
+        name_cell += f'<span class="license-chip">{html.escape(row["gh_license_spdx"])}</span>'
     if desc:
         name_cell += f'<div class="pkg-desc">{desc}</div>'
 
