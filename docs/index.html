@@ -28,6 +28,8 @@ tr:hover td { background: #fafbfc; }
 .ok { color: #1a7f37; font-weight: 600; }
 .drift { color: #cf222e; font-weight: 600; }
 .muted { color: #8c959f; }
+.alert-zero { color: #1a7f37; font-weight: 600; }
+.alert-some { color: #cf222e; font-weight: 600; }
 .footer { color: #6e7781; font-size: 0.85em; margin-top: 3em; border-top: 1px solid #eaeef2; padding-top: 1em; }
 .footer a { color: #0969da; }
 .metric { font-variant-numeric: tabular-nums; }
@@ -51,7 +53,7 @@ tr:hover td { background: #fafbfc; }
   engineering, threat intelligence, and OSINT. Zero-dependency Python where
   it makes sense; MIT licensed across the ecosystem.</p>
 
-  <p><strong>Snapshot:</strong> 4 OK | 0 DRIFT</p>
+  <p><strong>Snapshot:</strong> 4 OK | 0 DRIFT | 4 with query errors</p>
 
   <table>
     <thead>
@@ -60,6 +62,7 @@ tr:hover td { background: #fafbfc; }
         <th>PyPI</th>
         <th>GH Release</th>
         <th>Status</th>
+        <th>CodeQL alerts</th>
         <th>Downloads (30d)</th>
         <th>Stars</th>
         <th>Forks</th>
@@ -68,15 +71,15 @@ tr:hover td { background: #fafbfc; }
       </tr>
     </thead>
     <tbody>
-      <tr><td><span class="pkg-name"><a href="https://github.com/WRG-11/wrg-mcp-server">wrg-mcp-server</a></span><span class="license-chip">MIT</span><div class="pkg-desc">WRG MCP server - exposes WinstonRedGuard tools (governance + research + pulse + breach + ransom + threat-intel + OSINT) to Claude Code and AI agents</div></td><td class="ver">1.0.7</td><td class="ver">1.0.7</td><td><span class="ok">OK</span></td><td class="metric">339</td><td class="metric">0</td><td class="metric">0</td><td>today</td><td>today</td></tr>
-      <tr><td><span class="pkg-name"><a href="https://github.com/WRG-11/wrg-rule-lab">wrg-rule-lab</a></span><span class="license-chip">MIT</span><div class="pkg-desc">Deterministic rule evaluation engine — local-first Python library, JSON DSL, batch + diff + simulate</div></td><td class="ver">0.1.6</td><td class="ver">0.1.6</td><td><span class="ok">OK</span></td><td class="metric">126</td><td class="metric">0</td><td class="metric">0</td><td>today</td><td>today</td></tr>
-      <tr><td><span class="pkg-name"><a href="https://github.com/WRG-11/wrg-devguard">wrg-devguard</a></span><span class="license-chip">MIT</span><div class="pkg-desc">Pluggable code-security scanner: secrets, credentials, crypto policy. CLI + GitHub Action.</div></td><td class="ver">0.2.3</td><td class="ver">0.2.3</td><td><span class="ok">OK</span></td><td class="metric">456</td><td class="metric">0</td><td class="metric">0</td><td>today</td><td>today</td></tr>
-      <tr><td><span class="pkg-name"><a href="https://github.com/WRG-11/instinct">instinct</a></span><span class="license-chip">MIT</span><div class="pkg-desc">Self-learning memory for AI coding agents — MCP server</div></td><td class="ver">1.4.1</td><td class="ver">1.4.1</td><td><span class="ok">OK</span></td><td class="metric">223</td><td class="metric">2</td><td class="metric">3</td><td>today</td><td>today</td></tr>
+      <tr><td><span class="pkg-name"><a href="https://github.com/WRG-11/wrg-mcp-server">wrg-mcp-server</a></span><span class="license-chip">MIT</span><div class="pkg-desc">WRG MCP server - exposes WinstonRedGuard tools (governance + research + pulse + breach + ransom + threat-intel + OSINT) to Claude Code and AI agents</div></td><td class="ver">1.0.7</td><td class="ver">1.0.7</td><td><span class="ok">OK</span></td><td class="metric"><span class="muted">?</span></td><td class="metric">?</td><td class="metric">0</td><td class="metric">0</td><td>today</td><td>today</td></tr>
+      <tr><td><span class="pkg-name"><a href="https://github.com/WRG-11/wrg-rule-lab">wrg-rule-lab</a></span><span class="license-chip">MIT</span><div class="pkg-desc">Deterministic rule evaluation engine — local-first Python library, JSON DSL, batch + diff + simulate</div></td><td class="ver">0.1.6</td><td class="ver">0.1.6</td><td><span class="ok">OK</span></td><td class="metric"><span class="muted">?</span></td><td class="metric">343</td><td class="metric">0</td><td class="metric">0</td><td>today</td><td>today</td></tr>
+      <tr><td><span class="pkg-name"><a href="https://github.com/WRG-11/wrg-devguard">wrg-devguard</a></span><span class="license-chip">MIT</span><div class="pkg-desc">Pluggable code-security scanner: secrets, credentials, crypto policy. CLI + GitHub Action.</div></td><td class="ver">0.2.3</td><td class="ver">0.2.3</td><td><span class="ok">OK</span></td><td class="metric"><span class="muted">?</span></td><td class="metric">707</td><td class="metric">0</td><td class="metric">0</td><td>yesterday</td><td>today</td></tr>
+      <tr><td><span class="pkg-name"><a href="https://github.com/WRG-11/instinct">instinct</a></span><span class="license-chip">MIT</span><div class="pkg-desc">Self-learning memory for AI coding agents — MCP server</div></td><td class="ver">1.4.1</td><td class="ver">1.4.1</td><td><span class="ok">OK</span></td><td class="metric"><span class="muted">?</span></td><td class="metric">249</td><td class="metric">2</td><td class="metric">3</td><td>yesterday</td><td>today</td></tr>
     </tbody>
   </table>
 
   <p class="footer">
-    Generated 2026-05-23 14:55 UTC by
+    Generated 2026-05-24 11:49 UTC by
     <a href="https://github.com/WRG-11/wrg-portfolio">wrg-portfolio</a>
     (version-sentry sister). Daily auto-refresh via GitHub Actions cron.
     Data sources: pypi.org, pypistats.org, api.github.com. No tracking,
