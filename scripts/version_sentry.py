@@ -78,6 +78,13 @@ def _fetch_json(url: str, *, accept_404: bool = False) -> dict[str, Any] | None:
         # R89-14b H PF-002: name the exception specifically so it is
         # not lumped into the catch-all caller branch.
         raise ValueError(f"network unavailable fetching {url}: {exc.reason}") from exc
+    except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+        # R89-14b H PF-005 sister: HTML / non-JSON response body
+        # (captive portal, proxy interstitial, edge 502-as-200).
+        # Surface as a named ValueError so the operator sees the cause.
+        raise ValueError(
+            f"non-JSON response from {url}: {exc.__class__.__name__}"
+        ) from exc
 
 
 def _query_pypi_version(name: str) -> str:

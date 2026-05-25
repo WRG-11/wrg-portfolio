@@ -115,6 +115,14 @@ def _fetch_json(
         # (also swallows KeyError / TypeError programming bugs). Specific
         # locality: degrade to a "?" row instead.
         return None
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        # R89-14b H Wave-6 PF-005: server returned non-JSON (HTML error
+        # page, captive portal interstitial, proxy banner). Old code
+        # bubbled JSONDecodeError into the caller's ``except Exception``;
+        # specific-exception locality lets the dashboard treat this the
+        # same as a 404 — "data unavailable" without an alarmist row
+        # error.
+        return None
 
 
 def _normalize_version(raw: str) -> str:
