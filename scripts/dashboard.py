@@ -100,9 +100,21 @@ def _fetch_json(
             return None
         if retry_429 and exc.code == 429:
             time.sleep(RATE_LIMIT_BACKOFF_SECONDS)
-            with urllib.request.urlopen(req, timeout=TIMEOUT_SECONDS) as resp:
-                return json.loads(resp.read().decode("utf-8"))
+            try:
+                with urllib.request.urlopen(req, timeout=TIMEOUT_SECONDS) as resp:
+                    return json.loads(resp.read().decode("utf-8"))
+            except urllib.error.URLError:
+                # R89-14b H PF-001 retry path: DNS / conn-refused on
+                # the retry attempt degrades to None, same as primary.
+                return None
         raise
+    except urllib.error.URLError:
+        # R89-14b H Wave-6 PF-001: previously only HTTPError was caught.
+        # ``URLError`` (DNS failure, conn-refused, TLS handshake) bubbled
+        # out and forced every caller to ``except Exception`` — too broad
+        # (also swallows KeyError / TypeError programming bugs). Specific
+        # locality: degrade to a "?" row instead.
+        return None
 
 
 def _normalize_version(raw: str) -> str:
