@@ -57,7 +57,15 @@ def _normalize_version(raw: str) -> str:
 
 
 def _fetch_json(url: str, *, accept_404: bool = False) -> dict[str, Any] | None:
-    """GET URL and return parsed JSON. None on 404 when accept_404 is True."""
+    """GET URL and return parsed JSON. None on 404 when accept_404 is True.
+
+    R89-14b H Wave-6 PF-002 (sister to dashboard.py PF-001): previously
+    only ``HTTPError`` was caught. ``URLError`` (DNS, conn-refused, TLS)
+    raised through to ``_check_target``'s ``except Exception`` where it
+    was indistinguishable from any other programming bug in the same
+    try block. Specific-exception locality: raise ``ValueError`` with a
+    clear "network unavailable" message so the cause is named.
+    """
     req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, "Accept": "application/json"})
     try:
         with urllib.request.urlopen(req, timeout=TIMEOUT_SECONDS) as resp:
@@ -66,6 +74,10 @@ def _fetch_json(url: str, *, accept_404: bool = False) -> dict[str, Any] | None:
         if accept_404 and exc.code == 404:
             return None
         raise
+    except urllib.error.URLError as exc:
+        # R89-14b H PF-002: name the exception specifically so it is
+        # not lumped into the catch-all caller branch.
+        raise ValueError(f"network unavailable fetching {url}: {exc.reason}") from exc
 
 
 def _query_pypi_version(name: str) -> str:
