@@ -229,8 +229,22 @@ def _collect_target(
         try:
             payload = _fetch_json(f"https://pypi.org/pypi/{row['pypi_name']}/json", accept_404=True)
             if payload:
-                row["pypi_version"] = _normalize_version(payload["info"]["version"])
-                row["pypi_summary"] = payload["info"].get("summary") or ""
+                # R89-14b H Wave-6 PF-004 (sister of version_sentry PF-003):
+                # PyPI degraded responses sometimes drop the ``info`` key
+                # entirely. Old code did ``payload["info"]["version"]`` →
+                # KeyError → caller logs generic "pypi: KeyError". Use a
+                # defensive .get walk and record a specific "degraded
+                # shape" error instead.
+                info = payload.get("info") if isinstance(payload, dict) else None
+                if isinstance(info, dict):
+                    version = info.get("version")
+                    if version:
+                        row["pypi_version"] = _normalize_version(version)
+                    else:
+                        row["errors"].append("pypi: degraded shape (no info.version)")
+                    row["pypi_summary"] = info.get("summary") or ""
+                else:
+                    row["errors"].append("pypi: degraded shape (no info object)")
             else:
                 row["errors"].append("pypi: package not found")
         except Exception as exc:  # noqa: BLE001
