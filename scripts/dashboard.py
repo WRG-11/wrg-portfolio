@@ -99,9 +99,25 @@ def _fetch_json(
         if accept_404 and exc.code == 404:
             return None
         if retry_429 and exc.code == 429:
-            time.sleep(RATE_LIMIT_BACKOFF_SECONDS)
+            # R89-16b H PF-W7-01: honour the server-provided
+            # Retry-After header (fixed-7s backoff was either too
+            # short → re-trigger 429 → exhaust → None; or too long
+            # → runtime inflation). Cap at 60s to prevent a hostile
+            # / misconfigured server from stalling the dashboard.
+            # Build a FRESH Request — defensive in case urllib mutates
+            # internal state on first urlopen (Authorization-header
+            # behaviour differs across CPython minor versions; cheap
+            # belt-and-suspenders).
+            retry_after_raw = exc.headers.get("Retry-After") if exc.headers else None
             try:
-                with urllib.request.urlopen(req, timeout=TIMEOUT_SECONDS) as resp:
+                retry_after = int(retry_after_raw) if retry_after_raw else RATE_LIMIT_BACKOFF_SECONDS
+            except (TypeError, ValueError):
+                retry_after = RATE_LIMIT_BACKOFF_SECONDS
+            retry_after = max(1, min(retry_after, 60))
+            time.sleep(retry_after)
+            fresh_req = urllib.request.Request(url, headers=dict(headers))
+            try:
+                with urllib.request.urlopen(fresh_req, timeout=TIMEOUT_SECONDS) as resp:
                     return json.loads(resp.read().decode("utf-8"))
             except urllib.error.URLError:
                 # R89-14b H PF-001 retry path: DNS / conn-refused on
