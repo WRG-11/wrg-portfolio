@@ -81,19 +81,44 @@ def _fetch_json(url: str, *, accept_404: bool = False) -> dict[str, Any] | None:
 
 
 def _query_pypi_version(name: str) -> str:
-    """Fetch latest published version from pypi.org JSON API."""
+    """Fetch latest published version from pypi.org JSON API.
+
+    R89-14b H Wave-6 PF-003: previously ``payload["info"]["version"]``
+    raised KeyError on a degraded PyPI response (missing ``info`` key,
+    or missing ``version`` within). KeyError bubbled to caller's
+    ``except Exception`` where it became ``"pypi query failed:
+    KeyError: 'info'"`` — looks like a network error but is actually a
+    schema-shape error. ``.get`` walk + explicit ValueError clarifies.
+    """
     payload = _fetch_json(f"https://pypi.org/pypi/{name}/json", accept_404=True)
     if payload is None:
         raise ValueError(f"PyPI package not found: {name}")
-    return _normalize_version(payload["info"]["version"])
+    info = payload.get("info") if isinstance(payload, dict) else None
+    version = (info or {}).get("version") if isinstance(info, dict) else None
+    if not version:
+        raise ValueError(
+            f"PyPI response for {name} is missing info.version "
+            f"(degraded API response shape)"
+        )
+    return _normalize_version(version)
 
 
 def _query_github_release(repo: str) -> str:
-    """Fetch latest GitHub Release tag (NOT just latest tag) for owner/repo."""
+    """Fetch latest GitHub Release tag (NOT just latest tag) for owner/repo.
+
+    R89-14b H PF-003 sister: same defensive .get walk applied to the
+    GitHub Releases payload (``tag_name`` missing on partial responses).
+    """
     payload = _fetch_json(f"https://api.github.com/repos/{repo}/releases/latest", accept_404=True)
     if payload is None:
         raise ValueError(f"No GitHub Releases for: {repo}")
-    return _normalize_version(payload["tag_name"])
+    tag_name = payload.get("tag_name") if isinstance(payload, dict) else None
+    if not tag_name:
+        raise ValueError(
+            f"GitHub Releases response for {repo} is missing tag_name "
+            f"(degraded API response shape)"
+        )
+    return _normalize_version(tag_name)
 
 
 def _check_target(target: dict[str, Any]) -> dict[str, Any]:
