@@ -99,10 +99,46 @@ def _fetch_json(
         if accept_404 and exc.code == 404:
             return None
         if retry_429 and exc.code == 429:
-            time.sleep(RATE_LIMIT_BACKOFF_SECONDS)
-            with urllib.request.urlopen(req, timeout=TIMEOUT_SECONDS) as resp:
-                return json.loads(resp.read().decode("utf-8"))
+            # R89-16b H PF-W7-01: honour the server-provided
+            # Retry-After header (fixed-7s backoff was either too
+            # short → re-trigger 429 → exhaust → None; or too long
+            # → runtime inflation). Cap at 60s to prevent a hostile
+            # / misconfigured server from stalling the dashboard.
+            # Build a FRESH Request — defensive in case urllib mutates
+            # internal state on first urlopen (Authorization-header
+            # behaviour differs across CPython minor versions; cheap
+            # belt-and-suspenders).
+            retry_after_raw = exc.headers.get("Retry-After") if exc.headers else None
+            try:
+                retry_after = int(retry_after_raw) if retry_after_raw else RATE_LIMIT_BACKOFF_SECONDS
+            except (TypeError, ValueError):
+                retry_after = RATE_LIMIT_BACKOFF_SECONDS
+            retry_after = max(1, min(retry_after, 60))
+            time.sleep(retry_after)
+            fresh_req = urllib.request.Request(url, headers=dict(headers))
+            try:
+                with urllib.request.urlopen(fresh_req, timeout=TIMEOUT_SECONDS) as resp:
+                    return json.loads(resp.read().decode("utf-8"))
+            except urllib.error.URLError:
+                # R89-14b H PF-001 retry path: DNS / conn-refused on
+                # the retry attempt degrades to None, same as primary.
+                return None
         raise
+    except urllib.error.URLError:
+        # R89-14b H Wave-6 PF-001: previously only HTTPError was caught.
+        # ``URLError`` (DNS failure, conn-refused, TLS handshake) bubbled
+        # out and forced every caller to ``except Exception`` — too broad
+        # (also swallows KeyError / TypeError programming bugs). Specific
+        # locality: degrade to a "?" row instead.
+        return None
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        # R89-14b H Wave-6 PF-005: server returned non-JSON (HTML error
+        # page, captive portal interstitial, proxy banner). Old code
+        # bubbled JSONDecodeError into the caller's ``except Exception``;
+        # specific-exception locality lets the dashboard treat this the
+        # same as a 404 — "data unavailable" without an alarmist row
+        # error.
+        return None
 
 
 def _normalize_version(raw: str) -> str:
@@ -217,8 +253,22 @@ def _collect_target(
         try:
             payload = _fetch_json(f"https://pypi.org/pypi/{row['pypi_name']}/json", accept_404=True)
             if payload:
-                row["pypi_version"] = _normalize_version(payload["info"]["version"])
-                row["pypi_summary"] = payload["info"].get("summary") or ""
+                # R89-14b H Wave-6 PF-004 (sister of version_sentry PF-003):
+                # PyPI degraded responses sometimes drop the ``info`` key
+                # entirely. Old code did ``payload["info"]["version"]`` →
+                # KeyError → caller logs generic "pypi: KeyError". Use a
+                # defensive .get walk and record a specific "degraded
+                # shape" error instead.
+                info = payload.get("info") if isinstance(payload, dict) else None
+                if isinstance(info, dict):
+                    version = info.get("version")
+                    if version:
+                        row["pypi_version"] = _normalize_version(version)
+                    else:
+                        row["errors"].append("pypi: degraded shape (no info.version)")
+                    row["pypi_summary"] = info.get("summary") or ""
+                else:
+                    row["errors"].append("pypi: degraded shape (no info object)")
             else:
                 row["errors"].append("pypi: package not found")
         except Exception as exc:  # noqa: BLE001

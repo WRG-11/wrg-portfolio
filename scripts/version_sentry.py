@@ -57,7 +57,15 @@ def _normalize_version(raw: str) -> str:
 
 
 def _fetch_json(url: str, *, accept_404: bool = False) -> dict[str, Any] | None:
-    """GET URL and return parsed JSON. None on 404 when accept_404 is True."""
+    """GET URL and return parsed JSON. None on 404 when accept_404 is True.
+
+    R89-14b H Wave-6 PF-002 (sister to dashboard.py PF-001): previously
+    only ``HTTPError`` was caught. ``URLError`` (DNS, conn-refused, TLS)
+    raised through to ``_check_target``'s ``except Exception`` where it
+    was indistinguishable from any other programming bug in the same
+    try block. Specific-exception locality: raise ``ValueError`` with a
+    clear "network unavailable" message so the cause is named.
+    """
     req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, "Accept": "application/json"})
     try:
         with urllib.request.urlopen(req, timeout=TIMEOUT_SECONDS) as resp:
@@ -66,22 +74,58 @@ def _fetch_json(url: str, *, accept_404: bool = False) -> dict[str, Any] | None:
         if accept_404 and exc.code == 404:
             return None
         raise
+    except urllib.error.URLError as exc:
+        # R89-14b H PF-002: name the exception specifically so it is
+        # not lumped into the catch-all caller branch.
+        raise ValueError(f"network unavailable fetching {url}: {exc.reason}") from exc
+    except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+        # R89-14b H PF-005 sister: HTML / non-JSON response body
+        # (captive portal, proxy interstitial, edge 502-as-200).
+        # Surface as a named ValueError so the operator sees the cause.
+        raise ValueError(
+            f"non-JSON response from {url}: {exc.__class__.__name__}"
+        ) from exc
 
 
 def _query_pypi_version(name: str) -> str:
-    """Fetch latest published version from pypi.org JSON API."""
+    """Fetch latest published version from pypi.org JSON API.
+
+    R89-14b H Wave-6 PF-003: previously ``payload["info"]["version"]``
+    raised KeyError on a degraded PyPI response (missing ``info`` key,
+    or missing ``version`` within). KeyError bubbled to caller's
+    ``except Exception`` where it became ``"pypi query failed:
+    KeyError: 'info'"`` — looks like a network error but is actually a
+    schema-shape error. ``.get`` walk + explicit ValueError clarifies.
+    """
     payload = _fetch_json(f"https://pypi.org/pypi/{name}/json", accept_404=True)
     if payload is None:
         raise ValueError(f"PyPI package not found: {name}")
-    return _normalize_version(payload["info"]["version"])
+    info = payload.get("info") if isinstance(payload, dict) else None
+    version = (info or {}).get("version") if isinstance(info, dict) else None
+    if not version:
+        raise ValueError(
+            f"PyPI response for {name} is missing info.version "
+            f"(degraded API response shape)"
+        )
+    return _normalize_version(version)
 
 
 def _query_github_release(repo: str) -> str:
-    """Fetch latest GitHub Release tag (NOT just latest tag) for owner/repo."""
+    """Fetch latest GitHub Release tag (NOT just latest tag) for owner/repo.
+
+    R89-14b H PF-003 sister: same defensive .get walk applied to the
+    GitHub Releases payload (``tag_name`` missing on partial responses).
+    """
     payload = _fetch_json(f"https://api.github.com/repos/{repo}/releases/latest", accept_404=True)
     if payload is None:
         raise ValueError(f"No GitHub Releases for: {repo}")
-    return _normalize_version(payload["tag_name"])
+    tag_name = payload.get("tag_name") if isinstance(payload, dict) else None
+    if not tag_name:
+        raise ValueError(
+            f"GitHub Releases response for {repo} is missing tag_name "
+            f"(degraded API response shape)"
+        )
+    return _normalize_version(tag_name)
 
 
 def _check_target(target: dict[str, Any]) -> dict[str, Any]:

@@ -1,14 +1,18 @@
 {
   "instinct-mcp": {
-    "fetched_at": "2026-05-26T07:34:24Z",
+    "fetched_at": "2026-05-26T08:39:24Z",
     "last_month": 268
   },
   "wrg-devguard": {
-    "fetched_at": "2026-05-26T07:50:32Z",
+    "fetched_at": "2026-05-26T08:39:11Z",
     "last_month": 702
   },
+  "wrg-mcp-server": {
+    "fetched_at": "2026-05-26T08:38:59Z",
+    "last_month": 519
+  },
   "wrg-rule-lab": {
-    "fetched_at": "2026-05-26T07:34:00Z",
+    "fetched_at": "2026-05-26T08:39:05Z",
     "last_month": 363
   }
 }
