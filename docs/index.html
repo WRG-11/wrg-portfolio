@@ -45,6 +45,40 @@ tr:hover td { background: #fafbfc; }
   vertical-align: middle;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
+/* R89-18a enhancement B: marketplace channel chips. Sister of license-chip
+   styling, distinct per-channel colours so visitors associate chip-colour
+   with destination at a glance after one scan. */
+.channel-chip {
+  display: inline-block;
+  padding: 0.05em 0.5em;
+  margin-left: 0.3em;
+  border-radius: 1em;
+  font-size: 0.72em;
+  font-weight: 600;
+  vertical-align: middle;
+}
+.channel-chip.ch-pypi              { background: #fff5d0; color: #7a5c00; }
+.channel-chip.ch-github            { background: #eaeef2; color: #57606a; }
+.channel-chip.ch-glama             { background: #e6f5e6; color: #1a7f37; }
+.channel-chip.ch-anthropic         { background: #f5e6ff; color: #6f42c1; }
+.channel-chip.ch-anthropic-pending { background: #f5e6ff; color: #8250df; opacity: 0.7; font-style: italic; }
+.channel-chip.ch-docker            { background: #ddebff; color: #0969da; }
+.channel-chip.ch-skills            { background: #fff0e6; color: #bc4c00; }
+.channel-chip.ch-other             { background: #f6f8fa; color: #57606a; }
+/* R89-18a enhancement C: stale-cache indicator on download numbers.
+   Small, muted, not alarming — the number is still real, just last-known. */
+.cached-tag {
+  color: #8c959f;
+  font-size: 0.7em;
+  font-weight: 400;
+  font-style: italic;
+  margin-left: 0.3em;
+}
+/* R89-18a enhancement A: totals row (tfoot). Slightly bolder + bg accent
+   to separate ecosystem-level aggregate from per-package rows. */
+tfoot tr.totals td       { background: #f6f8fa; border-top: 2px solid #d0d7de; padding-top: 0.8em; padding-bottom: 0.8em; }
+tfoot tr.totals strong   { font-size: 1.0em; }
+tfoot tr.totals .totals-sub { color: #6e7781; font-size: 0.78em; font-weight: 400; margin-left: 0.3em; }
 </style>
 </head>
 <body>
@@ -71,16 +105,19 @@ tr:hover td { background: #fafbfc; }
       </tr>
     </thead>
     <tbody>
-      <tr><td><span class="pkg-name"><a href="https://github.com/WRG-11/wrg-mcp-server">wrg-mcp-server</a></span><span class="license-chip">MIT</span><div class="pkg-desc">WRG MCP server - exposes WinstonRedGuard tools (governance + research + pulse + breach + ransom + threat-intel + OSINT) to Claude Code and AI agents</div></td><td class="ver">1.0.7</td><td class="ver">1.0.7</td><td><span class="ok">OK</span></td><td class="metric"><span class="alert-some">1</span></td><td class="metric">519</td><td class="metric">1</td><td class="metric">0</td><td>2 days ago</td><td>today</td></tr>
-      <tr><td><span class="pkg-name"><a href="https://github.com/WRG-11/wrg-rule-lab">wrg-rule-lab</a></span><span class="license-chip">MIT</span><div class="pkg-desc">Deterministic rule evaluation engine — local-first Python library, JSON DSL, batch + diff + simulate</div></td><td class="ver">0.1.6</td><td class="ver">0.1.6</td><td><span class="ok">OK</span></td><td class="metric"><span class="alert-zero">0</span></td><td class="metric">?</td><td class="metric">0</td><td class="metric">0</td><td>2 days ago</td><td>yesterday</td></tr>
-      <tr><td><span class="pkg-name"><a href="https://github.com/WRG-11/wrg-devguard">wrg-devguard</a></span><span class="license-chip">MIT</span><div class="pkg-desc">Pluggable code-security scanner: secrets, credentials, crypto policy. CLI + GitHub Action.</div></td><td class="ver">0.2.3</td><td class="ver">0.2.3</td><td><span class="ok">OK</span></td><td class="metric"><span class="alert-zero">0</span></td><td class="metric">702</td><td class="metric">0</td><td class="metric">0</td><td>3 days ago</td><td>today</td></tr>
-      <tr><td><span class="pkg-name"><a href="https://github.com/WRG-11/instinct">instinct</a></span><span class="license-chip">MIT</span><div class="pkg-desc">Self-learning memory for AI coding agents — MCP server</div></td><td class="ver">1.4.1</td><td class="ver">1.4.1</td><td><span class="ok">OK</span></td><td class="metric"><span class="alert-zero">0</span></td><td class="metric">268</td><td class="metric">2</td><td class="metric">3</td><td>3 days ago</td><td>yesterday</td></tr>
-      <tr><td><span class="pkg-name"><a href="https://github.com/WRG-11/wrg-sigma-rules">wrg-sigma-rules</a></span><span class="license-chip">MIT</span><div class="pkg-desc">Sigma detection rule writing, validation, and conversion for Claude Code -- LLM-assisted + pySigma + multi-backend (Splunk, Elastic, Kibana, Wazuh). 61 production rules + 3 MCP tools + 3 skills.</div></td><td class="ver"><span class="muted">-</span></td><td class="ver">1.0.0</td><td><span class="muted">GH-ONLY</span></td><td class="metric"><span class="alert-zero">0</span></td><td class="metric">?</td><td class="metric">0</td><td class="metric">0</td><td>today</td><td>today</td></tr>
+      <tr><td><span class="pkg-name"><a href="https://github.com/WRG-11/wrg-mcp-server">wrg-mcp-server</a></span><span class="license-chip">MIT</span><span class="channel-chip ch-pypi">PyPI</span><span class="channel-chip ch-github">GitHub</span><div class="pkg-desc">WRG MCP server - exposes WinstonRedGuard tools (governance + research + pulse + breach + ransom + threat-intel + OSINT) to Claude Code and AI agents</div></td><td class="ver">1.0.7</td><td class="ver">1.0.7</td><td><span class="ok">OK</span></td><td class="metric"><span class="alert-some">1</span></td><td class="metric">519</td><td class="metric">1</td><td class="metric">0</td><td>2 days ago</td><td>today</td></tr>
+      <tr><td><span class="pkg-name"><a href="https://github.com/WRG-11/wrg-rule-lab">wrg-rule-lab</a></span><span class="license-chip">MIT</span><span class="channel-chip ch-pypi">PyPI</span><span class="channel-chip ch-github">GitHub</span><div class="pkg-desc">Deterministic rule evaluation engine — local-first Python library, JSON DSL, batch + diff + simulate</div></td><td class="ver">0.1.6</td><td class="ver">0.1.6</td><td><span class="ok">OK</span></td><td class="metric"><span class="alert-zero">0</span></td><td class="metric">363</td><td class="metric">0</td><td class="metric">0</td><td>2 days ago</td><td>yesterday</td></tr>
+      <tr><td><span class="pkg-name"><a href="https://github.com/WRG-11/wrg-devguard">wrg-devguard</a></span><span class="license-chip">MIT</span><span class="channel-chip ch-pypi">PyPI</span><span class="channel-chip ch-github">GitHub</span><div class="pkg-desc">Pluggable code-security scanner: secrets, credentials, crypto policy. CLI + GitHub Action.</div></td><td class="ver">0.2.3</td><td class="ver">0.2.3</td><td><span class="ok">OK</span></td><td class="metric"><span class="alert-zero">0</span></td><td class="metric">702 <span class="cached-tag">cached &lt;1h ago</span></td><td class="metric">0</td><td class="metric">0</td><td>3 days ago</td><td>today</td></tr>
+      <tr><td><span class="pkg-name"><a href="https://github.com/WRG-11/instinct">instinct</a></span><span class="license-chip">MIT</span><span class="channel-chip ch-pypi">PyPI</span><span class="channel-chip ch-github">GitHub</span><div class="pkg-desc">Self-learning memory for AI coding agents — MCP server</div></td><td class="ver">1.4.1</td><td class="ver">1.4.1</td><td><span class="ok">OK</span></td><td class="metric"><span class="alert-zero">0</span></td><td class="metric">268</td><td class="metric">2</td><td class="metric">3</td><td>3 days ago</td><td>yesterday</td></tr>
+      <tr><td><span class="pkg-name"><a href="https://github.com/WRG-11/wrg-sigma-rules">wrg-sigma-rules</a></span><span class="license-chip">MIT</span><span class="channel-chip ch-github">GitHub</span><span class="channel-chip ch-glama">Glama</span><span class="channel-chip ch-anthropic-pending">Anthropic CC ⏳</span><div class="pkg-desc">Sigma detection rule writing, validation, and conversion for Claude Code -- LLM-assisted + pySigma + multi-backend (Splunk, Elastic, Kibana, Wazuh). 61 production rules + 3 MCP tools + 3 skills.</div></td><td class="ver"><span class="muted">-</span></td><td class="ver">1.0.0</td><td><span class="muted">GH-ONLY</span></td><td class="metric"><span class="alert-zero">0</span></td><td class="metric">?</td><td class="metric">0</td><td class="metric">0</td><td>today</td><td>today</td></tr>
     </tbody>
+    <tfoot>
+      <tr class="totals"><td><strong>TOTAL — 5 packages</strong> <span class="totals-sub">(4 on PyPI, 1 GitHub-only)</span></td><td class="ver"><span class="muted">-</span></td><td class="ver"><span class="muted">-</span></td><td><span class="muted">-</span></td><td class="metric"><span class="alert-some">1</span> <span class="totals-sub">/ 5 scanned</span></td><td class="metric"><strong>1,852</strong></td><td class="metric"><strong>3</strong></td><td class="metric"><strong>3</strong></td><td><span class="muted">-</span></td><td><span class="muted">-</span></td></tr>
+    </tfoot>
   </table>
 
   <p class="footer">
-    Generated 2026-05-26 07:08 UTC by
+    Generated 2026-05-26 07:53 UTC by
     <a href="https://github.com/WRG-11/wrg-portfolio">wrg-portfolio</a>
     (version-sentry sister). Daily auto-refresh via GitHub Actions cron.
     Data sources: pypi.org, pypistats.org, api.github.com. No tracking,
