@@ -62,6 +62,17 @@ PYPISTATS_INTERCALL_DELAY = 3.0  # R89-18a fix #2: 3s spacing between pypistats 
 # unset, preserving the original public-only behaviour.
 GH_AUTH_TOKEN = os.environ.get("GH_DASHBOARD_TOKEN") or os.environ.get("GITHUB_TOKEN")
 
+# R89-18a enhancement C: pypistats download cache.
+# Persisted last-known-good download counts so that when pypistats
+# throttles a target on this run, the dashboard renders the cached
+# value with a "stale (Nh)" indicator instead of "?". Eliminates the
+# rotation pattern where 1-2 of 4 packages rendered "?" per run on
+# the GHA shared runner IP. Cache lives in data/dl_cache.json and is
+# committed alongside docs/index.html — small file (~5 entries × 3
+# fields), no .gitignore needed.
+DL_CACHE_PATH = Path("data/dl_cache.json")
+DL_CACHE_STALE_HOURS = 168  # 7 days — beyond this, treat cache as too stale to display
+
 
 def _fetch_json(
     url: str,
@@ -109,6 +120,46 @@ def _fmt_int(n: int | None) -> str:
     return str(n)
 
 
+def _load_dl_cache(path: Path) -> dict[str, dict[str, Any]]:
+    """Load the persisted pypistats download cache. Returns empty dict if missing
+    or malformed — never raises (cache is best-effort, never blocks the build)."""
+    if not path.exists():
+        return {}
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, UnicodeDecodeError, OSError):
+        return {}
+
+
+def _save_dl_cache(path: Path, cache: dict[str, dict[str, Any]]) -> None:
+    """Persist the pypistats download cache. Silently no-ops on write failure
+    so a read-only filesystem doesn't crash the dashboard."""
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(cache, indent=2, sort_keys=True), encoding="utf-8")
+    except OSError:
+        pass
+
+
+def _cache_age_label(iso: str | None) -> str:
+    """Render '2026-05-26T07:08:00Z' as 'cached 2h ago', 'cached 3d ago', etc.
+    Returns '' on parse error so the cell still renders the number."""
+    if not iso:
+        return ""
+    try:
+        dt = datetime.fromisoformat(iso.replace("Z", "+00:00"))
+    except ValueError:
+        return ""
+    delta = datetime.now(timezone.utc) - dt
+    hours = int(delta.total_seconds() // 3600)
+    if hours < 1:
+        return "cached <1h ago"
+    if hours < 24:
+        return f"cached {hours}h ago"
+    days = hours // 24
+    return f"cached {days}d ago"
+
+
 def _fmt_relative_date(iso: str | None) -> str:
     """Render '2026-05-23T14:00:00Z' as 'today' / 'yesterday' / 'N days ago'."""
     if not iso:
@@ -130,15 +181,25 @@ def _fmt_relative_date(iso: str | None) -> str:
     return f"{years} year{'s' if years > 1 else ''} ago"
 
 
-def _collect_target(target: dict[str, Any]) -> dict[str, Any]:
-    """Best-effort multi-source query. Records errors per source but never raises."""
+def _collect_target(
+    target: dict[str, Any],
+    *,
+    dl_cache: dict[str, dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Best-effort multi-source query. Records errors per source but never raises.
+    R89-18a enhancement C: when dl_cache is provided and pypistats fails for this
+    target, fall back to the cached download count (with stale-age indicator)."""
+    if dl_cache is None:
+        dl_cache = {}
     row: dict[str, Any] = {
         "name": target.get("name", "?"),
         "pypi_name": target.get("pypi_name"),
         "gh_repo": target.get("gh_repo"),
+        "channels": target.get("channels") or [],  # enhancement B
         "pypi_version": None,
         "pypi_summary": None,
         "pypi_downloads_month": None,
+        "pypi_downloads_cached_at": None,  # enhancement C: ISO timestamp if cached fallback
         "gh_release_tag": None,
         "gh_release_date": None,
         "gh_stars": None,
@@ -175,10 +236,30 @@ def _collect_target(target: dict[str, Any]) -> dict[str, Any]:
                 accept_404=True,
                 retry_429=True,
             )
-            if stats and "data" in stats:
-                row["pypi_downloads_month"] = stats["data"].get("last_month")
+            if stats and "data" in stats and stats["data"].get("last_month") is not None:
+                row["pypi_downloads_month"] = stats["data"]["last_month"]
+                # R89-18a enhancement C: persist successful response for fallback.
+                dl_cache[row["pypi_name"]] = {
+                    "last_month": stats["data"]["last_month"],
+                    "fetched_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                }
         except Exception as exc:  # noqa: BLE001
             row["errors"].append(f"pypistats: {exc.__class__.__name__}")
+
+        # R89-18a enhancement C: cache fallback. If pypistats failed or
+        # returned no last_month value, and we have a recent-enough cached
+        # entry for this package, use it with the stale-age timestamp so
+        # _render_row can surface the cached number + "cached Nh ago" tag.
+        if row["pypi_downloads_month"] is None and row["pypi_name"] in dl_cache:
+            cached = dl_cache[row["pypi_name"]]
+            try:
+                fetched_at = datetime.fromisoformat(cached["fetched_at"].replace("Z", "+00:00"))
+                age_hours = (datetime.now(timezone.utc) - fetched_at).total_seconds() / 3600
+                if age_hours <= DL_CACHE_STALE_HOURS:
+                    row["pypi_downloads_month"] = cached["last_month"]
+                    row["pypi_downloads_cached_at"] = cached["fetched_at"]
+            except (KeyError, ValueError, TypeError):
+                pass
 
     if row["gh_repo"]:
         try:
@@ -284,6 +365,40 @@ tr:hover td { background: #fafbfc; }
   vertical-align: middle;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
+/* R89-18a enhancement B: marketplace channel chips. Sister of license-chip
+   styling, distinct per-channel colours so visitors associate chip-colour
+   with destination at a glance after one scan. */
+.channel-chip {
+  display: inline-block;
+  padding: 0.05em 0.5em;
+  margin-left: 0.3em;
+  border-radius: 1em;
+  font-size: 0.72em;
+  font-weight: 600;
+  vertical-align: middle;
+}
+.channel-chip.ch-pypi              { background: #fff5d0; color: #7a5c00; }
+.channel-chip.ch-github            { background: #eaeef2; color: #57606a; }
+.channel-chip.ch-glama             { background: #e6f5e6; color: #1a7f37; }
+.channel-chip.ch-anthropic         { background: #f5e6ff; color: #6f42c1; }
+.channel-chip.ch-anthropic-pending { background: #f5e6ff; color: #8250df; opacity: 0.7; font-style: italic; }
+.channel-chip.ch-docker            { background: #ddebff; color: #0969da; }
+.channel-chip.ch-skills            { background: #fff0e6; color: #bc4c00; }
+.channel-chip.ch-other             { background: #f6f8fa; color: #57606a; }
+/* R89-18a enhancement C: stale-cache indicator on download numbers.
+   Small, muted, not alarming — the number is still real, just last-known. */
+.cached-tag {
+  color: #8c959f;
+  font-size: 0.7em;
+  font-weight: 400;
+  font-style: italic;
+  margin-left: 0.3em;
+}
+/* R89-18a enhancement A: totals row (tfoot). Slightly bolder + bg accent
+   to separate ecosystem-level aggregate from per-package rows. */
+tfoot tr.totals td       { background: #f6f8fa; border-top: 2px solid #d0d7de; padding-top: 0.8em; padding-bottom: 0.8em; }
+tfoot tr.totals strong   { font-size: 1.0em; }
+tfoot tr.totals .totals-sub { color: #6e7781; font-size: 0.78em; font-weight: 400; margin-left: 0.3em; }
 """
 
 
@@ -314,6 +429,12 @@ def _render_row(row: dict[str, Any]) -> str:
     name_cell = f'<span class="pkg-name"><a href="{html.escape(url)}">{name}</a></span>'
     if row["gh_license_spdx"]:
         name_cell += f'<span class="license-chip">{html.escape(row["gh_license_spdx"])}</span>'
+    # R89-18a enhancement B: marketplace channel chips next to license.
+    # Surfaces multi-channel distribution (PyPI / Glama / Anthropic CC, etc.)
+    # so visitors see WHERE each package ships from at a glance.
+    for ch in row.get("channels") or []:
+        chip_class, chip_label = _channel_chip(ch)
+        name_cell += f'<span class="channel-chip {chip_class}">{html.escape(chip_label)}</span>'
     if desc:
         name_cell += f'<div class="pkg-desc">{desc}</div>'
 
@@ -325,6 +446,17 @@ def _render_row(row: dict[str, Any]) -> str:
     else:
         codeql_html = f'<span class="alert-some">{codeql_open}</span>'
 
+    # R89-18a enhancement C: cached DL fallback indicator.
+    # When pypistats failed THIS run but a cache hit served the number,
+    # render '<value> <small>cached Nh ago</small>' so the data is
+    # transparent (no silent staleness) but visible (no "?" hole).
+    dl_int = _fmt_int(row["pypi_downloads_month"])
+    if row.get("pypi_downloads_cached_at") and row["pypi_downloads_month"] is not None:
+        age = _cache_age_label(row["pypi_downloads_cached_at"])
+        dl_cell = f'{dl_int} <span class="cached-tag">{html.escape(age)}</span>'
+    else:
+        dl_cell = dl_int
+
     return (
         "<tr>"
         f"<td>{name_cell}</td>"
@@ -332,7 +464,7 @@ def _render_row(row: dict[str, Any]) -> str:
         f'<td class="ver">{html.escape(gh) if gh else "<span class=\"muted\">-</span>"}</td>'
         f"<td>{status_html}</td>"
         f'<td class="metric">{codeql_html}</td>'
-        f'<td class="metric">{_fmt_int(row["pypi_downloads_month"])}</td>'
+        f'<td class="metric">{dl_cell}</td>'
         f'<td class="metric">{_fmt_int(row["gh_stars"])}</td>'
         f'<td class="metric">{_fmt_int(row["gh_forks"])}</td>'
         f'<td>{html.escape(_fmt_relative_date(row["gh_release_date"]))}</td>'
@@ -341,8 +473,58 @@ def _render_row(row: dict[str, Any]) -> str:
     )
 
 
+def _channel_chip(channel: str) -> tuple[str, str]:
+    """Map a channel id to (CSS-class-suffix, visible-label). Unknown channels
+    render with the generic 'ch-other' class so they still display."""
+    table = {
+        "pypi":                   ("ch-pypi", "PyPI"),
+        "github":                 ("ch-github", "GitHub"),
+        "glama":                  ("ch-glama", "Glama"),
+        "anthropic_cc":           ("ch-anthropic", "Anthropic CC"),
+        "anthropic_cc_pending":   ("ch-anthropic-pending", "Anthropic CC ⏳"),
+        "docker_mcp_catalog":     ("ch-docker", "Docker MCP"),
+        "skills_sh":              ("ch-skills", "skills.sh"),
+    }
+    return table.get(channel, ("ch-other", channel.replace("_", " ")))
+
+
+def _render_totals_row(rows: list[dict[str, Any]]) -> str:
+    """R89-18a enhancement A: aggregate totals as a tfoot row.
+    Renders the single-line scale signal — package count, total
+    downloads, total stars/forks, total open alerts — so a visitor
+    sees ecosystem-level numbers without manually adding up cells."""
+    total_packages = len(rows)
+    total_dl = sum(r["pypi_downloads_month"] or 0 for r in rows)
+    total_stars = sum(r["gh_stars"] or 0 for r in rows)
+    total_forks = sum(r["gh_forks"] or 0 for r in rows)
+    total_alerts = sum(r["gh_codeql_open"] or 0 for r in rows if r["gh_codeql_open"] is not None)
+    alerts_known = sum(1 for r in rows if r["gh_codeql_open"] is not None)
+    pypi_packages = sum(1 for r in rows if r["pypi_name"])
+    # Alert-known coverage badge: how many of the targets the CodeQL
+    # column actually reflects (rest are "?" — no CodeQL setup yet or
+    # alert-read auth missing). Honest signal vs claiming 0/5.
+    alerts_cell_class = "alert-zero" if total_alerts == 0 else "alert-some"
+    return (
+        '<tr class="totals">'
+        f'<td><strong>TOTAL — {total_packages} packages</strong>'
+        f' <span class="totals-sub">({pypi_packages} on PyPI, {total_packages - pypi_packages} GitHub-only)</span></td>'
+        '<td class="ver"><span class="muted">-</span></td>'  # PyPI col
+        '<td class="ver"><span class="muted">-</span></td>'  # GH col
+        '<td><span class="muted">-</span></td>'              # Status col
+        f'<td class="metric"><span class="{alerts_cell_class}">{total_alerts}</span>'
+        f' <span class="totals-sub">/ {alerts_known} scanned</span></td>'
+        f'<td class="metric"><strong>{_fmt_int(total_dl)}</strong></td>'
+        f'<td class="metric"><strong>{_fmt_int(total_stars)}</strong></td>'
+        f'<td class="metric"><strong>{_fmt_int(total_forks)}</strong></td>'
+        '<td><span class="muted">-</span></td>'              # Last release col
+        '<td><span class="muted">-</span></td>'              # Last commit col
+        '</tr>'
+    )
+
+
 def _render_html(rows: list[dict[str, Any]], generated_at: datetime) -> str:
     table_rows = "\n      ".join(_render_row(r) for r in rows)
+    totals_row = _render_totals_row(rows)  # R89-18a enhancement A
     failed = sum(1 for r in rows if r["errors"])
     drift = sum(1 for r in rows if r["drift"])
     ok = sum(1 for r in rows if r["pypi_version"] and r["gh_release_tag"] and not r["drift"])
@@ -386,6 +568,9 @@ def _render_html(rows: list[dict[str, Any]], generated_at: datetime) -> str:
     <tbody>
       {table_rows}
     </tbody>
+    <tfoot>
+      {totals_row}
+    </tfoot>
   </table>
 
   <p class="footer">
@@ -415,7 +600,13 @@ def main() -> int:
         print("[dashboard] no targets in config", file=sys.stderr)
         return 2
 
-    rows = [_collect_target(t) for t in targets]
+    # R89-18a enhancement C: load DL cache before collection so each
+    # target can fall back to a cached pypistats response when the
+    # live API fails (typically 429 on shared GHA runner IPs).
+    dl_cache = _load_dl_cache(DL_CACHE_PATH)
+    rows = [_collect_target(t, dl_cache=dl_cache) for t in targets]
+    # Persist (possibly updated) cache so next run starts hot.
+    _save_dl_cache(DL_CACHE_PATH, dl_cache)
     generated_at = datetime.now(timezone.utc)
     html_doc = _render_html(rows, generated_at)
 
@@ -423,7 +614,9 @@ def main() -> int:
     args.out.write_text(html_doc, encoding="utf-8")
 
     failed = sum(1 for r in rows if r["errors"])
-    print(f"[dashboard] wrote {args.out} ({len(rows)} rows, {failed} with query errors)")
+    cached_fallbacks = sum(1 for r in rows if r.get("pypi_downloads_cached_at"))
+    suffix = f" ({cached_fallbacks} DL from cache)" if cached_fallbacks else ""
+    print(f"[dashboard] wrote {args.out} ({len(rows)} rows, {failed} with query errors){suffix}")
     return 0
 
 

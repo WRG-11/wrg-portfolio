@@ -1,32 +1,37 @@
 {
-  "_comment": "WRG-11 packages the version sentry monitors. Each entry has a GitHub repo slug, plus optionally a PyPI name for PyPI-published packages. GitHub-only distributions (Claude Code plugins, MCP servers shipped via plugin marketplace) have pypi_name=null and skip the PyPI half of the drift check -- the dashboard tolerates the null and renders a '?' for the PyPI column. The sentry compares PyPI .info.version against the latest GitHub Release tag (with optional leading 'v' stripped). Drift means one channel was bumped without the other.",
+  "_comment": "WRG-11 packages the version sentry monitors. Each entry has a GitHub repo slug, plus optionally a PyPI name for PyPI-published packages. GitHub-only distributions (Claude Code plugins, MCP servers shipped via plugin marketplace) have pypi_name=null and skip the PyPI half of the drift check -- the dashboard tolerates the null and renders a '?' for the PyPI column. The sentry compares PyPI .info.version against the latest GitHub Release tag (with optional leading 'v' stripped). Drift means one channel was bumped without the other. The 'channels' array (R89-18a enhancement B) renders distribution-destination chips in the package-name cell (PyPI / Glama / Anthropic CC / docker_mcp_catalog / skills_sh / etc.); see _channel_chip() in dashboard.py for the recognised set.",
   "targets": [
     {
       "name": "wrg-mcp-server",
       "pypi_name": "wrg-mcp-server",
-      "gh_repo": "WRG-11/wrg-mcp-server"
+      "gh_repo": "WRG-11/wrg-mcp-server",
+      "channels": ["pypi", "github"]
     },
     {
       "name": "wrg-rule-lab",
       "pypi_name": "wrg-rule-lab",
-      "gh_repo": "WRG-11/wrg-rule-lab"
+      "gh_repo": "WRG-11/wrg-rule-lab",
+      "channels": ["pypi", "github"]
     },
     {
       "name": "wrg-devguard",
       "pypi_name": "wrg-devguard",
-      "gh_repo": "WRG-11/wrg-devguard"
+      "gh_repo": "WRG-11/wrg-devguard",
+      "channels": ["pypi", "github"]
     },
     {
       "name": "instinct",
       "_note": "PyPI dist name (instinct-mcp) differs from GitHub repo name (instinct) -- the plain 'instinct' name was already taken on PyPI when v1.0 shipped, so the package publishes under instinct-mcp. Config drift caught by sentry's 1st commissioning run (DRIFT detected against the wrong package); SB-16 1st canonical 'sentry config drift -- PyPI name != GH name'.",
       "pypi_name": "instinct-mcp",
-      "gh_repo": "WRG-11/instinct"
+      "gh_repo": "WRG-11/instinct",
+      "channels": ["pypi", "github"]
     },
     {
       "name": "wrg-sigma-rules",
       "_note": "GitHub-only distribution -- Claude Code plugin (Anthropic CC marketplace + Glama MCP catalog) + standalone MCP server. No PyPI package; the 3 MCP tools are imported directly from the cloned repo. Multi-channel ship 2026-05-26: Glama v1.0.0 LIVE, Anthropic CC marketplace pending listing. 1st GH-only target in the portfolio; exercises the pypi_name=null code path.",
       "pypi_name": null,
-      "gh_repo": "WRG-11/wrg-sigma-rules"
+      "gh_repo": "WRG-11/wrg-sigma-rules",
+      "channels": ["github", "glama", "anthropic_cc_pending"]
     }
   ]
 }
