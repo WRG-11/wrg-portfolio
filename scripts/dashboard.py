@@ -644,10 +644,51 @@ def main() -> int:
     if not args.config.exists():
         print(f"[dashboard] config not found: {args.config}", file=sys.stderr)
         return 2
-    config = json.loads(args.config.read_text(encoding="utf-8"))
+    # R89-24b PF-L2-10-001: config JSON decode was unguarded. A malformed
+    # config (typo, truncated write, manual edit) raised json.JSONDecodeError
+    # as an unhandled traceback -- operator saw a Python crash with no
+    # actionable indication that the config file was the problem. Wrap
+    # with explicit error path: clear single-line diagnostic + graceful
+    # exit-2 degradation, no HTML written.
+    try:
+        config = json.loads(args.config.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        print(
+            f"[dashboard] config JSON invalid ({args.config}): {exc}",
+            file=sys.stderr,
+        )
+        return 2
+    except OSError as exc:
+        print(
+            f"[dashboard] failed to read config ({args.config}): {exc}",
+            file=sys.stderr,
+        )
+        return 2
+    if not isinstance(config, dict):
+        print(
+            f"[dashboard] config root must be a JSON object, got "
+            f"{type(config).__name__}",
+            file=sys.stderr,
+        )
+        return 2
     targets = config.get("targets") or []
     if not targets:
         print("[dashboard] no targets in config", file=sys.stderr)
+        return 2
+    # R89-24b PF-L2-002: targets list may contain non-dict entries
+    # (typo writing a bare string or number). Filter to dict-only with
+    # a warning instead of crashing the run at the first .get() call
+    # inside _collect_target.
+    valid_targets = [t for t in targets if isinstance(t, dict)]
+    skipped = len(targets) - len(valid_targets)
+    if skipped:
+        print(
+            f"[dashboard] skipping {skipped} non-dict entries in targets",
+            file=sys.stderr,
+        )
+    targets = valid_targets
+    if not targets:
+        print("[dashboard] no valid target entries after type filter", file=sys.stderr)
         return 2
 
     # R89-18a enhancement C: load DL cache before collection so each
