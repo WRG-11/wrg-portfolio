@@ -37,6 +37,7 @@ from __future__ import annotations
 import argparse
 import html
 import json
+import os
 import sys
 import time
 import urllib.error
@@ -48,6 +49,18 @@ from typing import Any
 USER_AGENT = "wrg-portfolio-dashboard/1.0 (+https://github.com/WRG-11/wrg-portfolio)"
 TIMEOUT_SECONDS = 15
 RATE_LIMIT_BACKOFF_SECONDS = 7  # pypistats throttles ~10 req/min; one cool-down is enough
+PYPISTATS_INTERCALL_DELAY = 3.0  # R89-18a fix #2: 3s spacing between pypistats calls.
+                                 # Empirical: 2s sometimes insufficient (last call in a
+                                 # 4-target run got throttled); 3s = 20 calls/min ceiling
+                                 # with safety margin under the ~10 req/min API floor.
+                                 # Cost: ~12s extra runtime per dashboard generation.
+
+# R89-18a fix #1: read GitHub PAT from env once at module load.
+# When set, threaded into code-scanning/alerts requests so that
+# private alert visibility (default for new repos) returns real
+# numbers instead of HTTP 401 → "?". Falls back to anonymous if
+# unset, preserving the original public-only behaviour.
+GH_AUTH_TOKEN = os.environ.get("GH_DASHBOARD_TOKEN") or os.environ.get("GITHUB_TOKEN")
 
 
 def _fetch_json(
@@ -55,12 +68,19 @@ def _fetch_json(
     *,
     accept_404: bool = False,
     retry_429: bool = False,
+    auth_token: str | None = None,
 ) -> dict[str, Any] | None:
     """GET URL and return parsed JSON. None on 404 when accept_404 is True.
     When retry_429 is True, one retry after a short cool-down is performed
     on HTTP 429 (rate limit). pypistats.org imposes ~10 req/min so the
-    cool-down resolves transient throttling without inflating runtime."""
-    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, "Accept": "application/json"})
+    cool-down resolves transient throttling without inflating runtime.
+    When auth_token is provided, sent as Bearer in the Authorization
+    header — used for GitHub code-scanning/alerts endpoints that
+    require auth even for own repos (R89-18a fix #1)."""
+    headers = {"User-Agent": USER_AGENT, "Accept": "application/json"}
+    if auth_token:
+        headers["Authorization"] = f"Bearer {auth_token}"
+    req = urllib.request.Request(url, headers=headers)
     try:
         with urllib.request.urlopen(req, timeout=TIMEOUT_SECONDS) as resp:
             return json.loads(resp.read().decode("utf-8"))
@@ -144,6 +164,12 @@ def _collect_target(target: dict[str, Any]) -> dict[str, Any]:
             row["errors"].append(f"pypi: {exc.__class__.__name__}")
 
         try:
+            # R89-18a fix #2: inter-call delay before each pypistats hit.
+            # pypistats has ~10 req/min floor; rapid-fire calls (no spacing
+            # between 4-5 sequential targets) hit 429 even with retry_429
+            # because the retry sleeps only on FAIL. Pre-emptive 2s spacing
+            # keeps us comfortably under the floor.
+            time.sleep(PYPISTATS_INTERCALL_DELAY)
             stats = _fetch_json(
                 f"https://pypistats.org/api/packages/{row['pypi_name']}/recent",
                 accept_404=True,
@@ -176,20 +202,32 @@ def _collect_target(target: dict[str, Any]) -> dict[str, Any]:
         except Exception as exc:  # noqa: BLE001
             row["errors"].append(f"github-release: {exc.__class__.__name__}")
 
-        # Open CodeQL alert count (public repos: works anonymously when
-        # public alerts are enabled; private repos return 403 -- treat
-        # 404/403 as "no public visibility" rather than a hard error).
+        # R89-18a fix #1: Open CodeQL alert count.
+        #
+        # Empirically (2026-05-26 ground truth via gh api): the
+        # public code-scanning/alerts endpoint returns HTTP 401 for
+        # all WRG-11 repos when called anonymously — the docstring
+        # comment about "public alerts work anonymously" was wishful
+        # thinking, GitHub requires auth even for public-visibility
+        # repos. With GH_AUTH_TOKEN threaded in, the same endpoint
+        # returns real numbers (e.g. wrg-mcp-server has 1 open alert).
+        #
+        # Treat 401/403/404 as "no signal" (display "?") rather than
+        # a hard error: token may be missing entirely (anonymous
+        # fallback), or scoped to a subset of repos, or the repo
+        # may have no CodeQL analysis configured yet (404 = "no
+        # analysis found", common for newly-shipped repos).
         try:
             alerts = _fetch_json(
                 f"https://api.github.com/repos/{row['gh_repo']}/code-scanning/alerts?state=open&per_page=100",
                 accept_404=True,
+                auth_token=GH_AUTH_TOKEN,
             )
             if alerts is not None and isinstance(alerts, list):
                 row["gh_codeql_open"] = len(alerts)
         except urllib.error.HTTPError as exc:
-            if exc.code == 403:
-                # No public access to alerts (private alerts, or CodeQL not
-                # enabled on this repo). Surface as "?" rather than error.
+            if exc.code in (401, 403):
+                # Auth missing / insufficient scope / private alerts. "?".
                 pass
             else:
                 row["errors"].append(f"github-codeql: HTTP{exc.code}")
@@ -252,7 +290,14 @@ tr:hover td { background: #fafbfc; }
 def _render_row(row: dict[str, Any]) -> str:
     pypi = row["pypi_version"]
     gh = row["gh_release_tag"]
-    if pypi and gh and pypi == gh:
+    # R89-18a fix #3: explicit "GH-ONLY" label for entries with null
+    # pypi_name (Claude Code plugins, GitHub-only MCP servers). Avoids
+    # the misleading "?" which suggests a fetch error — there is no
+    # drift to check because there is no PyPI version to compare. Take
+    # precedence over OK/DRIFT/? branches below.
+    if not row["pypi_name"]:
+        status_html = '<span class="muted">GH-ONLY</span>'
+    elif pypi and gh and pypi == gh:
         status_html = '<span class="ok">OK</span>'
     elif row["drift"]:
         status_html = '<span class="drift">DRIFT</span>'
