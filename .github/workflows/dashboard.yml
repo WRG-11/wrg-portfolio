@@ -32,6 +32,18 @@ jobs:
           python-version: "3.12"
 
       - name: Generate dashboard
+        env:
+          # R89-18a fix #1: PAT with cross-org code-scanning:read access
+          # so dashboard.py can fetch CodeQL alert counts for every WRG-11
+          # repo (anonymous GitHub API returns HTTP 401 for code-scanning/
+          # alerts even on public repos with public-visibility alerts).
+          # Falls back to anonymous if the secret is unset, which surfaces
+          # "?" in the CodeQL column rather than failing the build.
+          # Operator note: create a fine-grained PAT scoped to WRG-11 org
+          # with permission "Code scanning alerts: Read" and add as repo
+          # secret GH_DASHBOARD_TOKEN. Classic PAT with `repo` scope also
+          # works (broader; less preferred).
+          GH_DASHBOARD_TOKEN: ${{ secrets.GH_DASHBOARD_TOKEN }}
         run: |
           python scripts/dashboard.py \
             --config config/sentry-targets.json \
