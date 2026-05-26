@@ -76,6 +76,28 @@ class PFW701RetryAfterHonored(unittest.TestCase):
         # Retry MUST use a fresh Request instance (different id), not
         # the same one the first urlopen consumed.
         self.assertIsNot(urlopen_calls[0], urlopen_calls[1])
+        # R89-24b PF-L2-40-001: strengthen the regression -- the FRESH
+        # Request must also carry a NEW headers dict, not a reference
+        # to the original. dict(headers) in _fetch_json produces a
+        # shallow copy; mutation of one must not bleed into the other.
+        # (Belt-and-suspenders against CPython urllib internal mutation
+        # behaviour shifts across 3.12 -> 3.14, per the gh-101926
+        # family fixes referenced in the original PF-W7-01 commit body.)
+        # Request stores headers in `.headers` (dict-like). Use the
+        # Python identity check rather than equality, since contents
+        # MAY legitimately be equal.
+        original_req_headers = urlopen_calls[0].headers  # type: ignore[attr-defined]
+        retry_req_headers = urlopen_calls[1].headers  # type: ignore[attr-defined]
+        self.assertIsNot(
+            original_req_headers,
+            retry_req_headers,
+            "PF-L2-40-001: retry Request must carry a fresh headers dict, "
+            "not a shared reference to the original Request's headers. "
+            "Pre-fix: dict(headers) in _fetch_json was producing a copy "
+            "in theory but the test did not verify identity -- any "
+            "future regression (e.g. accidental `headers=headers` reuse) "
+            "would slip through.",
+        )
 
     def test_falls_back_to_fixed_backoff_when_no_retry_after(self) -> None:
         first = _make_http_error_429(retry_after=None)
