@@ -217,6 +217,19 @@ def _fmt_relative_date(iso: str | None) -> str:
     return f"{years} year{'s' if years > 1 else ''} ago"
 
 
+def _date_to_days(iso: str | None) -> int:
+    """Convert ISO timestamp to integer days-since-today (0=today, 999999=unknown).
+    Used as numeric data-val for client-side sort on date columns (R89-60f F2).
+    Ascending sort = most recent first (0 days, then 3 days, then 30 days…)."""
+    if not iso:
+        return 999999
+    try:
+        dt = datetime.fromisoformat(iso.replace("Z", "+00:00"))
+        return max(0, (datetime.now(timezone.utc) - dt).days)
+    except ValueError:
+        return 999999
+
+
 def _collect_target(
     target: dict[str, Any],
     *,
@@ -505,6 +518,10 @@ tfoot tr.totals .totals-sub { color: #6e7781; font-size: 0.78em; font-weight: 40
 /* Vendor chips in disclosure chain (Section 5) */
 .vendor-chain { font-size: 0.83em; color: #57606a; margin: 0.3em 0; line-height: 2.0; word-break: break-word; }
 .vendor-chip { display: inline-block; background: #eaeef2; border-radius: 3px; padding: 0 0.35em; margin: 0.05em 0.1em; font-size: 0.9em; color: #24292f; white-space: nowrap; }
+/* R89-60f Feature 2: sortable column headers — sort direction indicator. */
+th.sortable::after { content: ' \2195'; color: #8c959f; font-size: 0.8em; }
+th.sortable[data-sort-dir=asc]::after { content: ' \2191'; color: #0969da; }
+th.sortable[data-sort-dir=desc]::after { content: ' \2193'; color: #0969da; }
 """
 
 
@@ -591,6 +608,15 @@ def _render_row(row: dict[str, Any]) -> str:
     else:
         dl_cell = dl_int
 
+    # R89-60f Feature 2: data-val for numeric sort on sortable columns.
+    # Only emitted when value is known; unknown cells sort to bottom (JS NaN→∞).
+    dl_raw = row["pypi_downloads_month"]
+    dl_val = f' data-val="{dl_raw}"' if dl_raw is not None else ""
+    stars_val = f' data-val="{row["gh_stars"]}"' if row["gh_stars"] is not None else ""
+    forks_val = f' data-val="{row["gh_forks"]}"' if row["gh_forks"] is not None else ""
+    release_val = f' data-val="{_date_to_days(row["gh_release_date"])}"' if row["gh_release_date"] else ""
+    commit_val = f' data-val="{_date_to_days(row["gh_pushed_at"])}"' if row["gh_pushed_at"] else ""
+
     return (
         # R89-60f Feature 1: data-category/name/desc for search+filter JS.
         f'<tr data-category="{cats_attr}" data-name="{html.escape(row["name"])}" data-desc="{html.escape(desc_raw)}">'
@@ -601,11 +627,11 @@ def _render_row(row: dict[str, Any]) -> str:
         f'<td class="metric">{codeql_html}</td>'
         f'<td class="metric">{cov_html}</td>'    # R89-58f coverage col
         f'<td>{glama_html}</td>'                  # R89-58f Glama col
-        f'<td class="metric">{dl_cell}</td>'
-        f'<td class="metric">{_fmt_int(row["gh_stars"])}</td>'
-        f'<td class="metric">{_fmt_int(row["gh_forks"])}</td>'
-        f'<td>{html.escape(_fmt_relative_date(row["gh_release_date"]))}</td>'
-        f'<td>{html.escape(_fmt_relative_date(row["gh_pushed_at"]))}</td>'
+        f'<td class="metric"{dl_val}>{dl_cell}</td>'
+        f'<td class="metric"{stars_val}>{_fmt_int(row["gh_stars"])}</td>'
+        f'<td class="metric"{forks_val}>{_fmt_int(row["gh_forks"])}</td>'
+        f'<td{release_val}>{html.escape(_fmt_relative_date(row["gh_release_date"]))}</td>'
+        f'<td{commit_val}>{html.escape(_fmt_relative_date(row["gh_pushed_at"]))}</td>'
         "</tr>"
     )
 
@@ -913,11 +939,11 @@ def _render_html(rows: list[dict[str, Any]], generated_at: datetime) -> str:
         <th>CodeQL alerts</th>
         <th>Coverage</th>
         <th>Glama</th>
-        <th>Downloads (30d)</th>
-        <th>Stars</th>
-        <th>Forks</th>
-        <th>Last release</th>
-        <th>Last commit</th>
+        <th class="sortable" data-col="7">Downloads (30d)</th>
+        <th class="sortable" data-col="8">Stars</th>
+        <th class="sortable" data-col="9">Forks</th>
+        <th class="sortable" data-col="10">Last release</th>
+        <th class="sortable" data-col="11">Last commit</th>
       </tr>
     </thead>
     <tbody>
