@@ -640,6 +640,24 @@ _DF_CTA_HTML = """\
   </div>"""
 
 
+# --- Section 4: Subagent class status box ----------------------------------
+# 5 LIVE subagents post-AGENTS.md §15.48 FORMAL SEAL (2026-05-27).
+# Source: docs/agents/_topology.md canonical roster.
+# Hardcoded (brief Q4 F karar: stable 5-vaka FORMAL SEAL; dynamic Phase 3 candidate).
+_SUBAGENT_BOX_HTML = """\
+  <div class="info-card">
+    <h3>&#x1F916; Subagent helpers <span style="font-weight:400;color:#57606a;font-size:0.85em">(FORMAL SEAL)</span></h3>
+    <ul>
+      <li>&#x2705; <strong>inbox-triager</strong> &#x2014; async dispatch on session-start</li>
+      <li>&#x2705; <strong>cross-repo-pr-sweeper</strong> &#x2014; portfolio PR enumerate</li>
+      <li>&#x2705; <strong>opsec-pii-scanner</strong> &#x2014; Tier 1/2/3 PII + false-flag matrix</li>
+      <li>&#x2705; <strong>brief-validator</strong> &#x2014; SB-57 spec-drift mitigation</li>
+      <li>&#x2705; <strong>brief-template-generator</strong> &#x2014; frontmatter discipline</li>
+    </ul>
+    <p style="margin-top:0.5em;font-size:0.78em;color:#8c959f;">A-orchestration-time class &middot; 5 LIVE &middot; 2026-05-27 FORMAL SEAL</p>
+  </div>"""
+
+
 # --- Section 1: MCP marketplace channel distribution (Pattern 45) ----------
 _CHANNEL_SECTION_HTML = """\
 <h2 class="section-heading">MCP marketplace distribution</h2>
@@ -766,6 +784,7 @@ def _render_html(rows: list[dict[str, Any]], generated_at: datetime) -> str:
   {_CHANNEL_SECTION_HTML}
   <div class="info-grid">
   {_DF_CTA_HTML}
+  {_SUBAGENT_BOX_HTML}
   </div>
 
   <p class="footer">
