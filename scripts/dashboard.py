@@ -615,6 +615,9 @@ tfoot tr.totals .totals-sub { color: #6e7781; font-size: 0.78em; font-weight: 40
 th.sortable::after { content: ' \2195'; color: #8c959f; font-size: 0.8em; }
 th.sortable[data-sort-dir=asc]::after { content: ' \2191'; color: #0969da; }
 th.sortable[data-sort-dir=desc]::after { content: ' \2193'; color: #0969da; }
+/* R89-60f Feature 4: stale > 24h banner (JS-injected when body.data-generated-at is old).
+   SB-65 sister: surface stale data explicitly rather than silently showing old numbers. */
+.stale-banner { background: #fff8c5; border: 1px solid #d4a72c; border-radius: 6px; padding: 0.6em 1em; margin: 0.6em 0; font-size: 0.87em; color: #633d11; }
 """
 
 
@@ -1017,7 +1020,7 @@ def _render_html(rows: list[dict[str, Any]], generated_at: datetime) -> str:
 <title>WRG-11 Portfolio</title>
 <style>{_CSS}</style>
 </head>
-<body>
+<body data-generated-at="{generated_at.isoformat()}">
   <h1>WRG-11 Portfolio</h1>
   <p class="lede">Open-source security tooling for AI/LLM defense, detection
   engineering, threat intelligence, and OSINT. Zero-dependency Python where
