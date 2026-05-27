@@ -658,6 +658,35 @@ _SUBAGENT_BOX_HTML = """\
   </div>"""
 
 
+# --- Section 5: 16-vendor responsible disclosure chain --------------------
+# R60→R82 sprints. 15 vendors listed in brief; CrewAI confirmed 16th per §15.37.
+# Link target: WRG-11/WinstonRedGuard monorepo (public research notes).
+# HTML entities used for arrows to avoid encoding issues in static page.
+_DISCLOSURE_CHAIN_HTML = """\
+  <div class="info-card">
+    <h3>&#x1F510; Active disclosure chain <span style="font-weight:400;color:#57606a;font-size:0.85em">(16 vendors R60&#x2192;R82)</span></h3>
+    <p class="vendor-chain">
+      <span class="vendor-chip">Mullvad</span> &#x2192;
+      <span class="vendor-chip">Mozilla</span> &#x2192;
+      <span class="vendor-chip">Cisco</span> &#x2192;
+      <span class="vendor-chip">Docker</span> &#x2192;
+      <span class="vendor-chip">PostgreSQL</span> &#x2192;
+      <span class="vendor-chip">Jenkins</span> &#x2192;
+      <span class="vendor-chip">Exim</span> &#x2192;
+      <span class="vendor-chip">PowerDNS</span> &#x2192;
+      <span class="vendor-chip">OpenSSH</span> &#x2192;
+      <span class="vendor-chip">Keycloak</span> &#x2192;
+      <span class="vendor-chip">OpenClaw</span> &#x2192;
+      <span class="vendor-chip">Kubernetes ingress&#x2011;nginx</span> &#x2192;
+      <span class="vendor-chip">Microsoft Hyper&#x2011;V</span> &#x2192;
+      <span class="vendor-chip">LangChain</span> &#x2192;
+      <span class="vendor-chip">CrewAI</span>
+    </p>
+    <p><a href="https://github.com/WRG-11/WinstonRedGuard">Full chain &#x2197;</a>
+    <span style="color:#8c959f;font-size:0.78em">&middot; responsible disclosure; CVE-ID data in research notes</span></p>
+  </div>"""
+
+
 # --- Section 1: MCP marketplace channel distribution (Pattern 45) ----------
 _CHANNEL_SECTION_HTML = """\
 <h2 class="section-heading">MCP marketplace distribution</h2>
@@ -785,6 +814,7 @@ def _render_html(rows: list[dict[str, Any]], generated_at: datetime) -> str:
   <div class="info-grid">
   {_DF_CTA_HTML}
   {_SUBAGENT_BOX_HTML}
+  {_DISCLOSURE_CHAIN_HTML}
   </div>
 
   <p class="footer">
