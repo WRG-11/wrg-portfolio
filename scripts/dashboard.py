@@ -232,6 +232,14 @@ def _collect_target(
         "pypi_name": target.get("pypi_name"),
         "gh_repo": target.get("gh_repo"),
         "channels": target.get("channels") or [],  # enhancement B
+        # R89-58f: static fields from config (data-refresh wave; F R89-58f).
+        # coverage_pct: test-coverage % from CI badge (F R89-48f badge wave).
+        # glama_score: Glama License/Quality/Maintenance grade (e.g. "A/A/B").
+        # description_override: dashboard description; takes precedence over
+        #   gh_description fetched from GitHub API (for wrg-sigma-rules 61→67 fix).
+        "coverage_pct": target.get("coverage_pct"),
+        "glama_score": target.get("glama_score"),
+        "description_override": target.get("description_override"),
         "pypi_version": None,
         "pypi_summary": None,
         "pypi_downloads_month": None,
@@ -449,6 +457,12 @@ tr:hover td { background: #fafbfc; }
 tfoot tr.totals td       { background: #f6f8fa; border-top: 2px solid #d0d7de; padding-top: 0.8em; padding-bottom: 0.8em; }
 tfoot tr.totals strong   { font-size: 1.0em; }
 tfoot tr.totals .totals-sub { color: #6e7781; font-size: 0.78em; font-weight: 400; margin-left: 0.3em; }
+/* R89-58f: test-coverage % column. Green/amber/red thresholds.
+   Glama score rendered mono so the A/A/B grade letters align cleanly. */
+.cov-high  { color: #1a7f37; font-weight: 600; font-variant-numeric: tabular-nums; }
+.cov-mid   { color: #9a6700; font-weight: 600; font-variant-numeric: tabular-nums; }
+.cov-low   { color: #cf222e; font-weight: 600; font-variant-numeric: tabular-nums; }
+.glama-score { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.88em; }
 """
 
 
@@ -474,7 +488,9 @@ def _render_row(row: dict[str, Any]) -> str:
     name = html.escape(row["name"])
     repo = html.escape(row["gh_repo"] or "")
     url = row["gh_html_url"] or (f"https://github.com/{row['gh_repo']}" if row["gh_repo"] else "#")
-    desc = html.escape(row["gh_description"] or row["pypi_summary"] or "")
+    # R89-58f: description_override takes precedence over GitHub API description.
+    # Used for wrg-sigma-rules (61 prod rules → 67 after R89-11d corpus add).
+    desc = html.escape(row.get("description_override") or row["gh_description"] or row["pypi_summary"] or "")
 
     name_cell = f'<span class="pkg-name"><a href="{html.escape(url)}">{name}</a></span>'
     if row["gh_license_spdx"]:
@@ -496,6 +512,27 @@ def _render_row(row: dict[str, Any]) -> str:
     else:
         codeql_html = f'<span class="alert-some">{codeql_open}</span>'
 
+    # R89-58f: test-coverage cell (static from config/sentry-targets.json).
+    # Thresholds: ≥90% green, ≥75% amber, <75% red. "n/a" for corpus/GitHub-only
+    # repos where coverage % is not meaningful (e.g. wrg-sigma-rules rule corpus).
+    cov = row.get("coverage_pct")
+    if cov is None:
+        cov_html = '<span class="muted">n/a</span>'
+    elif cov >= 90:
+        cov_html = f'<span class="cov-high">{cov}%</span>'
+    elif cov >= 75:
+        cov_html = f'<span class="cov-mid">{cov}%</span>'
+    else:
+        cov_html = f'<span class="cov-low">{cov}%</span>'
+
+    # R89-58f: Glama catalog score cell (static "A/A/B" from config).
+    # Rendered monospace so the grade letters line up across rows.
+    glama = row.get("glama_score")
+    if glama:
+        glama_html = f'<span class="glama-score">{html.escape(str(glama))}</span>'
+    else:
+        glama_html = '<span class="muted">-</span>'
+
     # R89-18a enhancement C: cached DL fallback indicator.
     # When pypistats failed THIS run but a cache hit served the number,
     # render '<value> <small>cached Nh ago</small>' so the data is
@@ -514,6 +551,8 @@ def _render_row(row: dict[str, Any]) -> str:
         f'<td class="ver">{html.escape(gh) if gh else "<span class=\"muted\">-</span>"}</td>'
         f"<td>{status_html}</td>"
         f'<td class="metric">{codeql_html}</td>'
+        f'<td class="metric">{cov_html}</td>'    # R89-58f coverage col
+        f'<td>{glama_html}</td>'                  # R89-58f Glama col
         f'<td class="metric">{dl_cell}</td>'
         f'<td class="metric">{_fmt_int(row["gh_stars"])}</td>'
         f'<td class="metric">{_fmt_int(row["gh_forks"])}</td>'
@@ -563,6 +602,8 @@ def _render_totals_row(rows: list[dict[str, Any]]) -> str:
         '<td><span class="muted">-</span></td>'              # Status col
         f'<td class="metric"><span class="{alerts_cell_class}">{total_alerts}</span>'
         f' <span class="totals-sub">/ {alerts_known} scanned</span></td>'
+        '<td class="metric"><span class="muted">-</span></td>'  # Coverage col (R89-58f)
+        '<td><span class="muted">-</span></td>'                  # Glama col (R89-58f)
         f'<td class="metric"><strong>{_fmt_int(total_dl)}</strong></td>'
         f'<td class="metric"><strong>{_fmt_int(total_stars)}</strong></td>'
         f'<td class="metric"><strong>{_fmt_int(total_forks)}</strong></td>'
@@ -608,6 +649,8 @@ def _render_html(rows: list[dict[str, Any]], generated_at: datetime) -> str:
         <th>GH Release</th>
         <th>Status</th>
         <th>CodeQL alerts</th>
+        <th>Coverage</th>
+        <th>Glama</th>
         <th>Downloads (30d)</th>
         <th>Stars</th>
         <th>Forks</th>
