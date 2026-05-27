@@ -232,6 +232,8 @@ def _collect_target(
         "pypi_name": target.get("pypi_name"),
         "gh_repo": target.get("gh_repo"),
         "channels": target.get("channels") or [],  # enhancement B
+        # R89-60f: category tags for client-side filter (sentry-targets.json).
+        "categories": target.get("categories") or [],
         # R89-58f: static fields from config (data-refresh wave; F R89-58f).
         # coverage_pct: test-coverage % from CI badge (F R89-48f badge wave).
         # glama_score: Glama License/Quality/Maintenance grade (e.g. "A/A/B").
@@ -463,6 +465,18 @@ tfoot tr.totals .totals-sub { color: #6e7781; font-size: 0.78em; font-weight: 40
 .cov-mid   { color: #9a6700; font-weight: 600; font-variant-numeric: tabular-nums; }
 .cov-low   { color: #cf222e; font-weight: 600; font-variant-numeric: tabular-nums; }
 .glama-score { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.88em; }
+/* R89-60f Phase 3: search/filter bar + mobile table scroll.
+   Vanilla JS progressively enhances; table is fully readable without JS. */
+.filter-bar { display: flex; gap: 0.6em; margin: 0.6em 0 0.4em; flex-wrap: wrap; align-items: center; }
+.filter-bar input, .filter-bar select { padding: 0.35em 0.6em; border: 1px solid #d0d7de; border-radius: 6px; font-size: 0.9em; font-family: inherit; background: #fff; }
+.filter-bar input { min-width: 180px; flex: 1 1 180px; }
+.filter-bar select { min-width: 160px; }
+.no-match { display: none; text-align: center; color: #57606a; font-size: 0.9em; padding: 1em 0; }
+.table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+@media (max-width: 768px) {
+  body { padding: 0 0.5em; }
+  th, td { padding: 0.4em 0.5em; font-size: 0.85em; }
+}
 /* R89-59f Phase 2: brand + narrative section styles.
    Anti-spam discipline (Pattern 35 sister): no email-capture / upsell;
    informational links only. */
@@ -518,7 +532,12 @@ def _render_row(row: dict[str, Any]) -> str:
     url = row["gh_html_url"] or (f"https://github.com/{row['gh_repo']}" if row["gh_repo"] else "#")
     # R89-58f: description_override takes precedence over GitHub API description.
     # Used for wrg-sigma-rules (61 prod rules → 67 after R89-11d corpus add).
-    desc = html.escape(row.get("description_override") or row["gh_description"] or row["pypi_summary"] or "")
+    desc_raw = row.get("description_override") or row["gh_description"] or row["pypi_summary"] or ""
+    desc = html.escape(desc_raw)
+
+    # R89-60f Feature 1: data-* attrs for client-side search/filter.
+    # data-category = comma-separated category tags from sentry-targets.json.
+    cats_attr = html.escape(",".join(row.get("categories") or []))
 
     name_cell = f'<span class="pkg-name"><a href="{html.escape(url)}">{name}</a></span>'
     if row["gh_license_spdx"]:
@@ -573,7 +592,8 @@ def _render_row(row: dict[str, Any]) -> str:
         dl_cell = dl_int
 
     return (
-        "<tr>"
+        # R89-60f Feature 1: data-category/name/desc for search+filter JS.
+        f'<tr data-category="{cats_attr}" data-name="{html.escape(row["name"])}" data-desc="{html.escape(desc_raw)}">'
         f"<td>{name_cell}</td>"
         f'<td class="ver">{html.escape(pypi) if pypi else "<span class=\"muted\">-</span>"}</td>'
         f'<td class="ver">{html.escape(gh) if gh else "<span class=\"muted\">-</span>"}</td>'
@@ -722,6 +742,101 @@ the only sigma detection plugin submitted to the Anthropic Claude Code marketpla
 </table>"""
 
 
+# ============================================================
+# R89-60f Phase 3: vanilla JS + filter bar.
+# Brief: .agents/inbox/F/from-A/2026-05-27-2342-r89-60f-portfolio-phase-3-ux-ops.md
+# Pattern 47 reuse>new strict: minimal client-side; no framework deps.
+# IIFE-wrapped; activates via data-* attrs set at generation time.
+# Features 1 (search/filter) + 2 (sortable columns) + 4 (stale banner)
+# all live in _JS so they share one <script> tag.
+# ============================================================
+
+# --- Filter bar HTML (Feature 1) ----------------------------------------
+# Category values must match `categories` arrays in sentry-targets.json.
+_FILTER_BAR_HTML = """\
+<div class="filter-bar">
+  <input type="text" id="pkg-search" placeholder="Search packages…" aria-label="Search packages" />
+  <select id="cat-filter" aria-label="Filter by category">
+    <option value="">All categories</option>
+    <option value="security">Security</option>
+    <option value="sigma">Sigma / Detection</option>
+    <option value="mcp">MCP</option>
+    <option value="ai">AI</option>
+    <option value="devops">DevOps</option>
+    <option value="research">Research</option>
+    <option value="memory">Memory</option>
+  </select>
+</div>"""
+
+
+# --- All vanilla JS (Features 1 + 2 + 4) --------------------------------
+# Single IIFE so no globals leak; data-* attributes on <tr>/<th>/<body> are
+# the only contract between the Python generator and this runtime code.
+_JS = """\
+(function(){
+  // --- Feature 1: search + category filter ---
+  var search=document.getElementById('pkg-search');
+  var catSel=document.getElementById('cat-filter');
+  var tbody=document.querySelector('table tbody');
+  var allRows=tbody?[].slice.call(tbody.querySelectorAll('tr')):[];
+  var noMatch=document.getElementById('filter-no-match');
+  function applyFilter(){
+    var q=search?search.value.toLowerCase():'';
+    var cat=catSel?catSel.value:'';
+    var vis=0;
+    allRows.forEach(function(tr){
+      var nm=(tr.dataset.name||'').toLowerCase();
+      var dc=(tr.dataset.desc||'').toLowerCase();
+      var cats=(tr.dataset.category||'').split(',');
+      var mQ=!q||nm.indexOf(q)!==-1||dc.indexOf(q)!==-1;
+      var mC=!cat||cats.indexOf(cat)!==-1;
+      tr.style.display=(mQ&&mC)?'':'none';
+      if(mQ&&mC)vis++;
+    });
+    if(noMatch)noMatch.style.display=vis===0?'block':'none';
+  }
+  if(search)search.addEventListener('input',applyFilter);
+  if(catSel)catSel.addEventListener('change',applyFilter);
+
+  // --- Feature 2: sortable columns ---
+  var sortCol=-1,sortDir=1;
+  var ths=[].slice.call(document.querySelectorAll('th.sortable'));
+  ths.forEach(function(th){
+    th.style.cursor='pointer';
+    th.title='Click to sort';
+    th.addEventListener('click',function(){
+      var c=parseInt(th.dataset.col,10);
+      if(sortCol===c){sortDir=-sortDir;}else{sortCol=c;sortDir=1;}
+      ths.forEach(function(t){t.removeAttribute('data-sort-dir');});
+      th.setAttribute('data-sort-dir',sortDir===1?'asc':'desc');
+      if(!tbody)return;
+      var rs=[].slice.call(tbody.querySelectorAll('tr'));
+      rs.sort(function(a,b){
+        var ac=a.cells[c],bc=b.cells[c];
+        var av=ac&&ac.dataset?parseFloat(ac.dataset.val):NaN;
+        var bv=bc&&bc.dataset?parseFloat(bc.dataset.val):NaN;
+        if(isNaN(av))av=Infinity;if(isNaN(bv))bv=Infinity;
+        return (av-bv)*sortDir;
+      });
+      rs.forEach(function(r){tbody.appendChild(r);});
+    });
+  });
+
+  // --- Feature 4: stale > 24h banner ---
+  var genAt=document.body&&document.body.dataset.generatedAt;
+  if(genAt){
+    var ageH=(Date.now()-new Date(genAt).getTime())/3600000;
+    if(ageH>24){
+      var b=document.createElement('div');
+      b.className='stale-banner';
+      b.textContent='⚠️ Dashboard data is '+Math.round(ageH)+'h old — GHA cron may be paused (billing gate). Run dashboard.py locally to refresh.';
+      var h1=document.querySelector('h1');
+      if(h1&&h1.parentNode)h1.parentNode.insertBefore(b,h1.nextSibling);
+    }
+  }
+})();"""
+
+
 def _render_totals_row(rows: list[dict[str, Any]]) -> str:
     """R89-18a enhancement A: aggregate totals as a tfoot row.
     Renders the single-line scale signal — package count, total
@@ -786,6 +901,8 @@ def _render_html(rows: list[dict[str, Any]], generated_at: datetime) -> str:
   {_MILESTONE_BANNER}
   <p><strong>Snapshot:</strong> {summary}</p>
 
+  {_FILTER_BAR_HTML}
+  <div class="table-wrapper">
   <table>
     <thead>
       <tr>
@@ -810,6 +927,8 @@ def _render_html(rows: list[dict[str, Any]], generated_at: datetime) -> str:
       {totals_row}
     </tfoot>
   </table>
+  <p id="filter-no-match" class="no-match">No packages match your filter.</p>
+  </div>
   {_CHANNEL_SECTION_HTML}
   <div class="info-grid">
   {_DF_CTA_HTML}
@@ -822,8 +941,9 @@ def _render_html(rows: list[dict[str, Any]], generated_at: datetime) -> str:
     <a href="https://github.com/WRG-11/wrg-portfolio">wrg-portfolio</a>
     (version-sentry sister). Daily auto-refresh via GitHub Actions cron.
     Data sources: pypi.org, pypistats.org, api.github.com. No tracking,
-    no JavaScript, no external assets.
+    minimal vanilla JS, no external assets.
   </p>
+  <script>{_JS}</script>
 </body>
 </html>
 """

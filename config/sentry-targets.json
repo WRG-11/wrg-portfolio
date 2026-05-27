@@ -6,6 +6,7 @@
       "pypi_name": "wrg-mcp-server",
       "gh_repo": "WRG-11/wrg-mcp-server",
       "channels": ["pypi", "github"],
+      "categories": ["security", "mcp"],
       "coverage_pct": 95
     },
     {
@@ -13,6 +14,7 @@
       "pypi_name": "wrg-rule-lab",
       "gh_repo": "WRG-11/wrg-rule-lab",
       "channels": ["pypi", "github"],
+      "categories": ["security", "sigma"],
       "coverage_pct": 92
     },
     {
@@ -20,6 +22,7 @@
       "pypi_name": "wrg-devguard",
       "gh_repo": "WRG-11/wrg-devguard",
       "channels": ["pypi", "github"],
+      "categories": ["security", "devops"],
       "coverage_pct": 94
     },
     {
@@ -28,6 +31,7 @@
       "pypi_name": "instinct-mcp",
       "gh_repo": "WRG-11/instinct",
       "channels": ["pypi", "github"],
+      "categories": ["ai", "memory", "mcp"],
       "coverage_pct": 84
     },
     {
@@ -36,6 +40,7 @@
       "pypi_name": null,
       "gh_repo": "WRG-11/wrg-sigma-rules",
       "channels": ["github", "glama", "anthropic_cc_pending"],
+      "categories": ["security", "sigma", "detection", "mcp"],
       "description_override": "67 sigma rules (61 Pazartesi + 6 R89-11d) — corpus full-clean 0/10 benign FP ALL 10 MITRE categories (R89-56v SATURATION-CONFIRMED) + 3 MCP tools + 3 skills.",
       "glama_score": "A/A/B"
     },
@@ -45,6 +50,7 @@
       "pypi_name": null,
       "gh_repo": "WRG-11/arastirma-ussu",
       "channels": ["github"],
+      "categories": ["ai", "research", "mcp"],
       "coverage_pct": 72
     }
   ]
