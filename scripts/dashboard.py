@@ -179,7 +179,7 @@ def _save_dl_cache(path: Path, cache: dict[str, dict[str, Any]]) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(cache, indent=2, sort_keys=True), encoding="utf-8")
     except OSError:
-        pass
+        pass  # Non-critical write; dashboard renders from live data (safe on read-only FS)
 
 
 def _cache_age_label(iso: str | None) -> str:
@@ -242,7 +242,7 @@ def _fetch_sparkline_data(
             if age_h <= SPARKLINE_CACHE_STALE_HOURS:
                 return cached["sparkline_7d"]
         except (ValueError, TypeError):
-            pass
+            pass  # Malformed sparkline_at timestamp — treat as cache-cold, fall through to fetch
 
     # Cache cold or stale — delay then fetch.
     time.sleep(PYPISTATS_INTERCALL_DELAY)
@@ -419,7 +419,7 @@ def _collect_target(
                     row["pypi_downloads_month"] = cached["last_month"]
                     row["pypi_downloads_cached_at"] = cached["fetched_at"]
             except (KeyError, ValueError, TypeError):
-                pass
+                pass  # Malformed cache entry — skip stale fallback, leave pypi_downloads_month as-is
 
         # R89-60f Feature 3: sparkline 7-day SVG. Fetches pypistats overall
         # endpoint (with cache; cold fetch adds PYPISTATS_INTERCALL_DELAY
@@ -641,7 +641,6 @@ def _render_row(row: dict[str, Any]) -> str:
         status_html = '<span class="muted">-</span>'
 
     name = html.escape(row["name"])
-    repo = html.escape(row["gh_repo"] or "")
     url = row["gh_html_url"] or (f"https://github.com/{row['gh_repo']}" if row["gh_repo"] else "#")
     # R89-58f: description_override takes precedence over GitHub API description.
     # Used for wrg-sigma-rules (61 prod rules → 67 after R89-11d corpus add).
