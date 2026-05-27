@@ -612,6 +612,21 @@ def _channel_chip(channel: str) -> tuple[str, str]:
 # All sections hardcoded (brief Q&A F karar: static this wave; dynamic Phase 3 candidate).
 # ============================================================
 
+# --- Section 2: 2026-05-27 milestone banner ---------------------------------
+# Hardcoded (brief Q1 reco: static this wave; dynamic Phase 3 via AGENTS.md parse).
+# Public-facing language: internal sprint codes translated to technical substance.
+_MILESTONE_BANNER = """\
+<div class="milestone-banner">
+  <strong>&#x1F393; 2026-05-27 milestones</strong>
+  <ul>
+    <li>Sigma cycle methodology FORMAL &#x2014; 3-cycle B+V validation chain; 0/67 rule false-positives across all 10 MITRE ATT&amp;CK categories (R89-56v SATURATION-CONFIRMED)</li>
+    <li>DRY documentation architecture &#x2014; single-source topology canonical; roster drift vector eliminated (Pattern 47 docs-applied 1st-vaka)</li>
+    <li>5-subagent helper class FORMAL SEAL &#x2014; inbox-triager + OPSEC-scanner + brief-validator + cross-repo-sweeper + template-generator</li>
+    <li>DECADE+23 milestone &#x2014; 33-pattern research catalog; Pattern 27 Track A 15-vaka convergent external-anchor chain</li>
+  </ul>
+</div>"""
+
+
 # --- Section 1: MCP marketplace channel distribution (Pattern 45) ----------
 _CHANNEL_SECTION_HTML = """\
 <h2 class="section-heading">MCP marketplace distribution</h2>
@@ -708,7 +723,7 @@ def _render_html(rows: list[dict[str, Any]], generated_at: datetime) -> str:
   <p class="lede">Open-source security tooling for AI/LLM defense, detection
   engineering, threat intelligence, and OSINT. Zero-dependency Python where
   it makes sense; MIT licensed across the ecosystem.</p>
-
+  {_MILESTONE_BANNER}
   <p><strong>Snapshot:</strong> {summary}</p>
 
   <table>
