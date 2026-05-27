@@ -463,6 +463,34 @@ tfoot tr.totals .totals-sub { color: #6e7781; font-size: 0.78em; font-weight: 40
 .cov-mid   { color: #9a6700; font-weight: 600; font-variant-numeric: tabular-nums; }
 .cov-low   { color: #cf222e; font-weight: 600; font-variant-numeric: tabular-nums; }
 .glama-score { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.88em; }
+/* R89-59f Phase 2: brand + narrative section styles.
+   Anti-spam discipline (Pattern 35 sister): no email-capture / upsell;
+   informational links only. */
+.section-heading { font-size: 1em; font-weight: 600; margin-top: 2em; margin-bottom: 0.5em; color: #24292f; border-bottom: 1px solid #eaeef2; padding-bottom: 0.3em; }
+/* Marketplace channel matrix (Section 1) */
+.ch-matrix th, .ch-matrix td { font-size: 0.85em; }
+.ch-present { color: #1a7f37; font-weight: 600; }
+.ch-pending { color: #9a6700; font-style: italic; }
+.ch-absent  { color: #8c959f; }
+/* Milestone banner (Section 2) — muted info strip, not marketing. */
+.milestone-banner { background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 6px; padding: 0.65em 1em; margin: 0.8em 0 0.4em; font-size: 0.87em; }
+.milestone-banner strong { color: #0550ae; }
+.milestone-banner ul { margin: 0.3em 0 0; padding-left: 1.2em; }
+.milestone-banner li { margin: 0.15em 0; color: #24292f; }
+/* Info-grid: flex row of cards for Sections 3/4/5 */
+.info-grid { display: flex; flex-wrap: wrap; gap: 1em; margin-top: 1.5em; }
+.info-card { flex: 1; min-width: 260px; border: 1px solid #d0d7de; border-radius: 6px; padding: 0.9em 1em; background: #f6f8fa; }
+.info-card h3 { margin: 0 0 0.5em; font-size: 0.88em; font-weight: 600; color: #24292f; }
+.info-card ul { margin: 0; padding-left: 1.2em; font-size: 0.83em; }
+.info-card li { margin: 0.2em 0; color: #57606a; }
+.info-card p { font-size: 0.85em; margin: 0.3em 0; color: #57606a; }
+.info-card a { color: #0969da; }
+/* DF CTA link (Section 3) */
+.cta-link { display: inline-block; margin-top: 0.5em; color: #0969da; font-weight: 600; text-decoration: none; font-size: 0.88em; }
+.cta-link:hover { text-decoration: underline; }
+/* Vendor chips in disclosure chain (Section 5) */
+.vendor-chain { font-size: 0.83em; color: #57606a; margin: 0.3em 0; line-height: 2.0; word-break: break-word; }
+.vendor-chip { display: inline-block; background: #eaeef2; border-radius: 3px; padding: 0 0.35em; margin: 0.05em 0.1em; font-size: 0.9em; color: #24292f; white-space: nowrap; }
 """
 
 
@@ -577,6 +605,48 @@ def _channel_chip(channel: str) -> tuple[str, str]:
     return table.get(channel, ("ch-other", channel.replace("_", " ")))
 
 
+# ============================================================
+# R89-59f Phase 2: static brand + narrative sections.
+# Brief: .agents/inbox/F/from-A/2026-05-27-2342-r89-59f-portfolio-phase-2-brand-narrative.md
+# Anti-spam discipline: informational links only; no upsell / email-capture.
+# All sections hardcoded (brief Q&A F karar: static this wave; dynamic Phase 3 candidate).
+# ============================================================
+
+# --- Section 1: MCP marketplace channel distribution (Pattern 45) ----------
+_CHANNEL_SECTION_HTML = """\
+<h2 class="section-heading">MCP marketplace distribution</h2>
+<p style="font-size:0.85em;color:#57606a;margin:0.3em 0 0.8em;"><strong>wrg-sigma-rules</strong> is
+the only sigma detection plugin submitted to the Anthropic Claude Code marketplace. Pattern 45
+5-channel state verified 2026-05-27.</p>
+<table class="ch-matrix">
+  <thead>
+    <tr>
+      <th>Package</th>
+      <th>Anthropic CC</th>
+      <th>Glama</th>
+      <th>awesome-mcp-servers</th>
+      <th>MCP Registry</th>
+      <th>Docker MCP Catalog</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>wrg-sigma-rules</td>
+      <td class="ch-pending">&#x23F3; submitted</td>
+      <td class="ch-present">&#x2705; <a href="https://glama.ai/mcp/servers/wrg-sigma-rules" style="color:inherit">A/A/B</a></td>
+      <td class="ch-present">&#x2705; <a href="https://github.com/punkpeye/awesome-mcp-servers/pull/6905" style="color:inherit">PR #6905</a></td>
+      <td class="ch-absent">&#x2014;</td>
+      <td class="ch-absent">&#x2014;</td>
+    </tr>
+    <tr><td>wrg-mcp-server</td><td colspan="5" class="ch-absent" style="font-size:0.82em;">PyPI + GitHub only (MCP tools via PyPI, not in MCP marketplace)</td></tr>
+    <tr><td>instinct</td><td colspan="5" class="ch-absent" style="font-size:0.82em;">PyPI + GitHub only</td></tr>
+    <tr><td>arastirma-ussu</td><td colspan="5" class="ch-absent" style="font-size:0.82em;">GitHub only (MCP server; marketplaces not yet targeted)</td></tr>
+    <tr><td>wrg-rule-lab</td><td colspan="5" class="ch-absent" style="font-size:0.82em;">PyPI + GitHub only (Python library)</td></tr>
+    <tr><td>wrg-devguard</td><td colspan="5" class="ch-absent" style="font-size:0.82em;">PyPI + GitHub only (CLI + GitHub Action)</td></tr>
+  </tbody>
+</table>"""
+
+
 def _render_totals_row(rows: list[dict[str, Any]]) -> str:
     """R89-18a enhancement A: aggregate totals as a tfoot row.
     Renders the single-line scale signal — package count, total
@@ -665,6 +735,7 @@ def _render_html(rows: list[dict[str, Any]], generated_at: datetime) -> str:
       {totals_row}
     </tfoot>
   </table>
+  {_CHANNEL_SECTION_HTML}
 
   <p class="footer">
     Generated {generated_at.strftime("%Y-%m-%d %H:%M UTC")} by
