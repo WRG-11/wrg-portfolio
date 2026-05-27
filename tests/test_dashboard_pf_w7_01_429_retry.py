@@ -4,11 +4,10 @@ from __future__ import annotations
 
 import io
 import sys
-import unittest
 import urllib.error
 from email.message import Message
 from pathlib import Path
-from unittest import mock
+from unittest import TestCase, main, mock
 
 # Load scripts/dashboard.py as a module (the script-style layout has no
 # __init__.py).
@@ -45,7 +44,7 @@ class FakeResp:
         return self._body
 
 
-class PFW701RetryAfterHonored(unittest.TestCase):
+class PFW701RetryAfterHonored(TestCase):
     """R89-16b H PF-W7-01: 429 retry now (a) honours server-provided
     Retry-After header (was: ignored — fixed 7s), and (b) builds a
     fresh Request on retry (defensive against urllib internal state
@@ -117,4 +116,4 @@ class PFW701RetryAfterHonored(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    unittest.main()
+    main()
