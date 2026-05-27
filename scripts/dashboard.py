@@ -627,6 +627,19 @@ _MILESTONE_BANNER = """\
 </div>"""
 
 
+# --- Section 3: Detection Frontier newsletter CTA --------------------------
+# Anti-spam discipline (Pattern 35 sister): no email-capture inline; subscribe link only.
+# URL: https://detection-frontier.kit.com/subscribe (Kit free tier, detectionfrontier@proton.me)
+_DF_CTA_HTML = """\
+  <div class="info-card">
+    <h3>&#x1F4F0; Detection Frontier</h3>
+    <p>AI threat research newsletter &#x2014; bot-detection, sigma methodology, LLM security disclosures.
+    Written from the WRG-11 field research stack.</p>
+    <a class="cta-link" href="https://detection-frontier.kit.com/subscribe">Subscribe &#x2197;</a>
+    <p style="margin-top:0.4em;font-size:0.78em;color:#8c959f;">No tracking &middot; free &middot; ~weekly</p>
+  </div>"""
+
+
 # --- Section 1: MCP marketplace channel distribution (Pattern 45) ----------
 _CHANNEL_SECTION_HTML = """\
 <h2 class="section-heading">MCP marketplace distribution</h2>
@@ -751,6 +764,9 @@ def _render_html(rows: list[dict[str, Any]], generated_at: datetime) -> str:
     </tfoot>
   </table>
   {_CHANNEL_SECTION_HTML}
+  <div class="info-grid">
+  {_DF_CTA_HTML}
+  </div>
 
   <p class="footer">
     Generated {generated_at.strftime("%Y-%m-%d %H:%M UTC")} by
