@@ -85,6 +85,34 @@ tfoot tr.totals .totals-sub { color: #6e7781; font-size: 0.78em; font-weight: 40
 .cov-mid   { color: #9a6700; font-weight: 600; font-variant-numeric: tabular-nums; }
 .cov-low   { color: #cf222e; font-weight: 600; font-variant-numeric: tabular-nums; }
 .glama-score { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.88em; }
+/* R89-59f Phase 2: brand + narrative section styles.
+   Anti-spam discipline (Pattern 35 sister): no email-capture / upsell;
+   informational links only. */
+.section-heading { font-size: 1em; font-weight: 600; margin-top: 2em; margin-bottom: 0.5em; color: #24292f; border-bottom: 1px solid #eaeef2; padding-bottom: 0.3em; }
+/* Marketplace channel matrix (Section 1) */
+.ch-matrix th, .ch-matrix td { font-size: 0.85em; }
+.ch-present { color: #1a7f37; font-weight: 600; }
+.ch-pending { color: #9a6700; font-style: italic; }
+.ch-absent  { color: #8c959f; }
+/* Milestone banner (Section 2) — muted info strip, not marketing. */
+.milestone-banner { background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 6px; padding: 0.65em 1em; margin: 0.8em 0 0.4em; font-size: 0.87em; }
+.milestone-banner strong { color: #0550ae; }
+.milestone-banner ul { margin: 0.3em 0 0; padding-left: 1.2em; }
+.milestone-banner li { margin: 0.15em 0; color: #24292f; }
+/* Info-grid: flex row of cards for Sections 3/4/5 */
+.info-grid { display: flex; flex-wrap: wrap; gap: 1em; margin-top: 1.5em; }
+.info-card { flex: 1; min-width: 260px; border: 1px solid #d0d7de; border-radius: 6px; padding: 0.9em 1em; background: #f6f8fa; }
+.info-card h3 { margin: 0 0 0.5em; font-size: 0.88em; font-weight: 600; color: #24292f; }
+.info-card ul { margin: 0; padding-left: 1.2em; font-size: 0.83em; }
+.info-card li { margin: 0.2em 0; color: #57606a; }
+.info-card p { font-size: 0.85em; margin: 0.3em 0; color: #57606a; }
+.info-card a { color: #0969da; }
+/* DF CTA link (Section 3) */
+.cta-link { display: inline-block; margin-top: 0.5em; color: #0969da; font-weight: 600; text-decoration: none; font-size: 0.88em; }
+.cta-link:hover { text-decoration: underline; }
+/* Vendor chips in disclosure chain (Section 5) */
+.vendor-chain { font-size: 0.83em; color: #57606a; margin: 0.3em 0; line-height: 2.0; word-break: break-word; }
+.vendor-chip { display: inline-block; background: #eaeef2; border-radius: 3px; padding: 0 0.35em; margin: 0.05em 0.1em; font-size: 0.9em; color: #24292f; white-space: nowrap; }
 </style>
 </head>
 <body>
@@ -92,7 +120,15 @@ tfoot tr.totals .totals-sub { color: #6e7781; font-size: 0.78em; font-weight: 40
   <p class="lede">Open-source security tooling for AI/LLM defense, detection
   engineering, threat intelligence, and OSINT. Zero-dependency Python where
   it makes sense; MIT licensed across the ecosystem.</p>
-
+  <div class="milestone-banner">
+  <strong>&#x1F393; 2026-05-27 milestones</strong>
+  <ul>
+    <li>Sigma cycle methodology FORMAL &#x2014; 3-cycle B+V validation chain; 0/67 rule false-positives across all 10 MITRE ATT&amp;CK categories (R89-56v SATURATION-CONFIRMED)</li>
+    <li>DRY documentation architecture &#x2014; single-source topology canonical; roster drift vector eliminated (Pattern 47 docs-applied 1st-vaka)</li>
+    <li>5-subagent helper class FORMAL SEAL &#x2014; inbox-triager + OPSEC-scanner + brief-validator + cross-repo-sweeper + template-generator</li>
+    <li>DECADE+23 milestone &#x2014; 33-pattern research catalog; Pattern 27 Track A 15-vaka convergent external-anchor chain</li>
+  </ul>
+</div>
   <p><strong>Snapshot:</strong> 4 OK | 0 DRIFT</p>
 
   <table>
@@ -114,19 +150,92 @@ tfoot tr.totals .totals-sub { color: #6e7781; font-size: 0.78em; font-weight: 40
     </thead>
     <tbody>
       <tr><td><span class="pkg-name"><a href="https://github.com/WRG-11/wrg-mcp-server">wrg-mcp-server</a></span><span class="license-chip">MIT</span><span class="channel-chip ch-pypi">PyPI</span><span class="channel-chip ch-github">GitHub</span><div class="pkg-desc">WRG MCP server - exposes WinstonRedGuard tools (governance + research + pulse + breach + ransom + threat-intel + OSINT) to Claude Code and AI agents</div></td><td class="ver">1.0.7</td><td class="ver">1.0.7</td><td><span class="ok">OK</span></td><td class="metric"><span class="alert-zero">0</span></td><td class="metric"><span class="cov-high">95%</span></td><td><span class="muted">-</span></td><td class="metric">506</td><td class="metric">1</td><td class="metric">0</td><td>4 days ago</td><td>today</td></tr>
-      <tr><td><span class="pkg-name"><a href="https://github.com/WRG-11/wrg-rule-lab">wrg-rule-lab</a></span><span class="license-chip">MIT</span><span class="channel-chip ch-pypi">PyPI</span><span class="channel-chip ch-github">GitHub</span><div class="pkg-desc">Deterministic rule evaluation engine — local-first Python library, JSON DSL, batch + diff + simulate</div></td><td class="ver">0.1.6</td><td class="ver">0.1.6</td><td><span class="ok">OK</span></td><td class="metric"><span class="alert-zero">0</span></td><td class="metric"><span class="cov-high">92%</span></td><td><span class="muted">-</span></td><td class="metric">363 <span class="cached-tag">cached 1d ago</span></td><td class="metric">0</td><td class="metric">0</td><td>4 days ago</td><td>today</td></tr>
-      <tr><td><span class="pkg-name"><a href="https://github.com/WRG-11/wrg-devguard">wrg-devguard</a></span><span class="license-chip">MIT</span><span class="channel-chip ch-pypi">PyPI</span><span class="channel-chip ch-github">GitHub</span><div class="pkg-desc">Pluggable code-security scanner: secrets, credentials, crypto policy. CLI + GitHub Action.</div></td><td class="ver">0.2.3</td><td class="ver">0.2.3</td><td><span class="ok">OK</span></td><td class="metric"><span class="alert-zero">0</span></td><td class="metric"><span class="cov-high">94%</span></td><td><span class="muted">-</span></td><td class="metric">702 <span class="cached-tag">cached 1d ago</span></td><td class="metric">0</td><td class="metric">0</td><td>4 days ago</td><td>today</td></tr>
-      <tr><td><span class="pkg-name"><a href="https://github.com/WRG-11/instinct">instinct</a></span><span class="license-chip">MIT</span><span class="channel-chip ch-pypi">PyPI</span><span class="channel-chip ch-github">GitHub</span><div class="pkg-desc">Self-learning memory for AI coding agents — MCP server</div></td><td class="ver">1.4.1</td><td class="ver">1.4.1</td><td><span class="ok">OK</span></td><td class="metric"><span class="alert-zero">0</span></td><td class="metric"><span class="cov-mid">84%</span></td><td><span class="muted">-</span></td><td class="metric">267</td><td class="metric">2</td><td class="metric">3</td><td>5 days ago</td><td>today</td></tr>
+      <tr><td><span class="pkg-name"><a href="https://github.com/WRG-11/wrg-rule-lab">wrg-rule-lab</a></span><span class="license-chip">MIT</span><span class="channel-chip ch-pypi">PyPI</span><span class="channel-chip ch-github">GitHub</span><div class="pkg-desc">Deterministic rule evaluation engine — local-first Python library, JSON DSL, batch + diff + simulate</div></td><td class="ver">0.1.6</td><td class="ver">0.1.6</td><td><span class="ok">OK</span></td><td class="metric"><span class="alert-zero">0</span></td><td class="metric"><span class="cov-high">92%</span></td><td><span class="muted">-</span></td><td class="metric">371</td><td class="metric">0</td><td class="metric">0</td><td>4 days ago</td><td>today</td></tr>
+      <tr><td><span class="pkg-name"><a href="https://github.com/WRG-11/wrg-devguard">wrg-devguard</a></span><span class="license-chip">MIT</span><span class="channel-chip ch-pypi">PyPI</span><span class="channel-chip ch-github">GitHub</span><div class="pkg-desc">Pluggable code-security scanner: secrets, credentials, crypto policy. CLI + GitHub Action.</div></td><td class="ver">0.2.3</td><td class="ver">0.2.3</td><td><span class="ok">OK</span></td><td class="metric"><span class="alert-zero">0</span></td><td class="metric"><span class="cov-high">94%</span></td><td><span class="muted">-</span></td><td class="metric">567</td><td class="metric">0</td><td class="metric">0</td><td>4 days ago</td><td>today</td></tr>
+      <tr><td><span class="pkg-name"><a href="https://github.com/WRG-11/instinct">instinct</a></span><span class="license-chip">MIT</span><span class="channel-chip ch-pypi">PyPI</span><span class="channel-chip ch-github">GitHub</span><div class="pkg-desc">Self-learning memory for AI coding agents — MCP server</div></td><td class="ver">1.4.1</td><td class="ver">1.4.1</td><td><span class="ok">OK</span></td><td class="metric"><span class="alert-zero">0</span></td><td class="metric"><span class="cov-mid">84%</span></td><td><span class="muted">-</span></td><td class="metric">267 <span class="cached-tag">cached 1h ago</span></td><td class="metric">2</td><td class="metric">3</td><td>5 days ago</td><td>today</td></tr>
       <tr><td><span class="pkg-name"><a href="https://github.com/WRG-11/wrg-sigma-rules">wrg-sigma-rules</a></span><span class="license-chip">MIT</span><span class="channel-chip ch-github">GitHub</span><span class="channel-chip ch-glama">Glama</span><span class="channel-chip ch-anthropic-pending">Anthropic CC ⏳</span><div class="pkg-desc">67 sigma rules (61 Pazartesi + 6 R89-11d) — corpus full-clean 0/10 benign FP ALL 10 MITRE categories (R89-56v SATURATION-CONFIRMED) + 3 MCP tools + 3 skills.</div></td><td class="ver"><span class="muted">-</span></td><td class="ver">1.0.0</td><td><span class="muted">GH-ONLY</span></td><td class="metric"><span class="alert-zero">0</span></td><td class="metric"><span class="muted">n/a</span></td><td><span class="glama-score">A/A/B</span></td><td class="metric">?</td><td class="metric">0</td><td class="metric">0</td><td>yesterday</td><td>today</td></tr>
       <tr><td><span class="pkg-name"><a href="https://github.com/WRG-11/arastirma-ussu">arastirma-ussu</a></span><span class="license-chip">MIT</span><span class="channel-chip ch-github">GitHub</span><div class="pkg-desc">Local-first AI research assistant — 5-layer stack with memory, web search, document analysis (Ollama + Qdrant + FAISS, MCP server)</div></td><td class="ver"><span class="muted">-</span></td><td class="ver"><span class="muted">-</span></td><td><span class="muted">GH-ONLY</span></td><td class="metric"><span class="alert-zero">0</span></td><td class="metric"><span class="cov-low">72%</span></td><td><span class="muted">-</span></td><td class="metric">?</td><td class="metric">0</td><td class="metric">0</td><td>?</td><td>today</td></tr>
     </tbody>
     <tfoot>
-      <tr class="totals"><td><strong>TOTAL — 6 packages</strong> <span class="totals-sub">(4 on PyPI, 2 GitHub-only)</span></td><td class="ver"><span class="muted">-</span></td><td class="ver"><span class="muted">-</span></td><td><span class="muted">-</span></td><td class="metric"><span class="alert-zero">0</span> <span class="totals-sub">/ 6 scanned</span></td><td class="metric"><span class="muted">-</span></td><td><span class="muted">-</span></td><td class="metric"><strong>1,838</strong></td><td class="metric"><strong>3</strong></td><td class="metric"><strong>3</strong></td><td><span class="muted">-</span></td><td><span class="muted">-</span></td></tr>
+      <tr class="totals"><td><strong>TOTAL — 6 packages</strong> <span class="totals-sub">(4 on PyPI, 2 GitHub-only)</span></td><td class="ver"><span class="muted">-</span></td><td class="ver"><span class="muted">-</span></td><td><span class="muted">-</span></td><td class="metric"><span class="alert-zero">0</span> <span class="totals-sub">/ 6 scanned</span></td><td class="metric"><span class="muted">-</span></td><td><span class="muted">-</span></td><td class="metric"><strong>1,711</strong></td><td class="metric"><strong>3</strong></td><td class="metric"><strong>3</strong></td><td><span class="muted">-</span></td><td><span class="muted">-</span></td></tr>
     </tfoot>
   </table>
+  <h2 class="section-heading">MCP marketplace distribution</h2>
+<p style="font-size:0.85em;color:#57606a;margin:0.3em 0 0.8em;"><strong>wrg-sigma-rules</strong> is
+the only sigma detection plugin submitted to the Anthropic Claude Code marketplace. Pattern 45
+5-channel state verified 2026-05-27.</p>
+<table class="ch-matrix">
+  <thead>
+    <tr>
+      <th>Package</th>
+      <th>Anthropic CC</th>
+      <th>Glama</th>
+      <th>awesome-mcp-servers</th>
+      <th>MCP Registry</th>
+      <th>Docker MCP Catalog</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>wrg-sigma-rules</td>
+      <td class="ch-pending">&#x23F3; submitted</td>
+      <td class="ch-present">&#x2705; <a href="https://glama.ai/mcp/servers/wrg-sigma-rules" style="color:inherit">A/A/B</a></td>
+      <td class="ch-present">&#x2705; <a href="https://github.com/punkpeye/awesome-mcp-servers/pull/6905" style="color:inherit">PR #6905</a></td>
+      <td class="ch-absent">&#x2014;</td>
+      <td class="ch-absent">&#x2014;</td>
+    </tr>
+    <tr><td>wrg-mcp-server</td><td colspan="5" class="ch-absent" style="font-size:0.82em;">PyPI + GitHub only (MCP tools via PyPI, not in MCP marketplace)</td></tr>
+    <tr><td>instinct</td><td colspan="5" class="ch-absent" style="font-size:0.82em;">PyPI + GitHub only</td></tr>
+    <tr><td>arastirma-ussu</td><td colspan="5" class="ch-absent" style="font-size:0.82em;">GitHub only (MCP server; marketplaces not yet targeted)</td></tr>
+    <tr><td>wrg-rule-lab</td><td colspan="5" class="ch-absent" style="font-size:0.82em;">PyPI + GitHub only (Python library)</td></tr>
+    <tr><td>wrg-devguard</td><td colspan="5" class="ch-absent" style="font-size:0.82em;">PyPI + GitHub only (CLI + GitHub Action)</td></tr>
+  </tbody>
+</table>
+  <div class="info-grid">
+    <div class="info-card">
+    <h3>&#x1F4F0; Detection Frontier</h3>
+    <p>AI threat research newsletter &#x2014; bot-detection, sigma methodology, LLM security disclosures.
+    Written from the WRG-11 field research stack.</p>
+    <a class="cta-link" href="https://detection-frontier.kit.com/subscribe">Subscribe &#x2197;</a>
+    <p style="margin-top:0.4em;font-size:0.78em;color:#8c959f;">No tracking &middot; free &middot; ~weekly</p>
+  </div>
+    <div class="info-card">
+    <h3>&#x1F916; Subagent helpers <span style="font-weight:400;color:#57606a;font-size:0.85em">(FORMAL SEAL)</span></h3>
+    <ul>
+      <li>&#x2705; <strong>inbox-triager</strong> &#x2014; async dispatch on session-start</li>
+      <li>&#x2705; <strong>cross-repo-pr-sweeper</strong> &#x2014; portfolio PR enumerate</li>
+      <li>&#x2705; <strong>opsec-pii-scanner</strong> &#x2014; Tier 1/2/3 PII + false-flag matrix</li>
+      <li>&#x2705; <strong>brief-validator</strong> &#x2014; SB-57 spec-drift mitigation</li>
+      <li>&#x2705; <strong>brief-template-generator</strong> &#x2014; frontmatter discipline</li>
+    </ul>
+    <p style="margin-top:0.5em;font-size:0.78em;color:#8c959f;">A-orchestration-time class &middot; 5 LIVE &middot; 2026-05-27 FORMAL SEAL</p>
+  </div>
+    <div class="info-card">
+    <h3>&#x1F510; Active disclosure chain <span style="font-weight:400;color:#57606a;font-size:0.85em">(16 vendors R60&#x2192;R82)</span></h3>
+    <p class="vendor-chain">
+      <span class="vendor-chip">Mullvad</span> &#x2192;
+      <span class="vendor-chip">Mozilla</span> &#x2192;
+      <span class="vendor-chip">Cisco</span> &#x2192;
+      <span class="vendor-chip">Docker</span> &#x2192;
+      <span class="vendor-chip">PostgreSQL</span> &#x2192;
+      <span class="vendor-chip">Jenkins</span> &#x2192;
+      <span class="vendor-chip">Exim</span> &#x2192;
+      <span class="vendor-chip">PowerDNS</span> &#x2192;
+      <span class="vendor-chip">OpenSSH</span> &#x2192;
+      <span class="vendor-chip">Keycloak</span> &#x2192;
+      <span class="vendor-chip">OpenClaw</span> &#x2192;
+      <span class="vendor-chip">Kubernetes ingress&#x2011;nginx</span> &#x2192;
+      <span class="vendor-chip">Microsoft Hyper&#x2011;V</span> &#x2192;
+      <span class="vendor-chip">LangChain</span> &#x2192;
+      <span class="vendor-chip">CrewAI</span>
+    </p>
+    <p><a href="https://github.com/WRG-11/WinstonRedGuard">Full chain &#x2197;</a>
+    <span style="color:#8c959f;font-size:0.78em">&middot; responsible disclosure; CVE-ID data in research notes</span></p>
+  </div>
+  </div>
 
   <p class="footer">
-    Generated 2026-05-27 21:01 UTC by
+    Generated 2026-05-27 22:03 UTC by
     <a href="https://github.com/WRG-11/wrg-portfolio">wrg-portfolio</a>
     (version-sentry sister). Daily auto-refresh via GitHub Actions cron.
     Data sources: pypi.org, pypistats.org, api.github.com. No tracking,
