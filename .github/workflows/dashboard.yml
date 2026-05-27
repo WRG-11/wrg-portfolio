@@ -13,6 +13,24 @@ on:
   schedule:
     - cron: '0 7 * * *'
   workflow_dispatch:
+  # R89-60f Feature 5: push trigger so that edits to the generator script or
+  # config auto-regenerate the dashboard without waiting for the next cron.
+  # Path filter ensures the workflow only fires on generator/config changes —
+  # not on the generated docs/index.html commit (preventing the cron→push loop).
+  # The workflow's auto-commit uses GITHUB_TOKEN which GitHub treats as a bot push;
+  # by convention those do not re-trigger workflows, but the path filter is a
+  # belt-and-suspenders guard regardless.
+  #
+  # BILLING GATE (R89-60f): GitHub Actions is currently disabled (billing-suspended
+  # R88-51). This trigger is present but inactive. Operator action to re-enable:
+  #   Settings → Billing & Plans → GitHub Actions → re-enable
+  # Once re-enabled, the push trigger activates automatically on the next
+  # push to main that modifies scripts/dashboard.py or config/sentry-targets.json.
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/dashboard.py'
+      - 'config/sentry-targets.json'
 
 permissions:
   contents: write

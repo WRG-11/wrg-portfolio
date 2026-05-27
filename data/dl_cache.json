@@ -1,18 +1,58 @@
 {
   "instinct-mcp": {
     "fetched_at": "2026-05-27T21:01:52Z",
-    "last_month": 267
+    "last_month": 267,
+    "sparkline_7d": [
+      6,
+      6,
+      80,
+      28,
+      11,
+      16,
+      1
+    ],
+    "sparkline_at": "2026-05-27T22:27:19Z"
   },
   "wrg-devguard": {
-    "fetched_at": "2026-05-27T22:03:39Z",
-    "last_month": 567
+    "fetched_at": "2026-05-27T22:27:00Z",
+    "last_month": 567,
+    "sparkline_7d": [
+      1,
+      6,
+      104,
+      255,
+      18,
+      15,
+      48
+    ],
+    "sparkline_at": "2026-05-27T22:27:03Z"
   },
   "wrg-mcp-server": {
     "fetched_at": "2026-05-27T22:03:22Z",
-    "last_month": 506
+    "last_month": 506,
+    "sparkline_7d": [
+      2,
+      1,
+      8,
+      84,
+      303,
+      22,
+      21
+    ],
+    "sparkline_at": "2026-05-27T22:26:40Z"
   },
   "wrg-rule-lab": {
-    "fetched_at": "2026-05-27T22:03:27Z",
-    "last_month": 371
+    "fetched_at": "2026-05-27T22:26:44Z",
+    "last_month": 371,
+    "sparkline_7d": [
+      2,
+      2,
+      93,
+      217,
+      14,
+      8,
+      8
+    ],
+    "sparkline_at": "2026-05-27T22:26:48Z"
   }
 }

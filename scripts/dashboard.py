@@ -72,6 +72,11 @@ GH_AUTH_TOKEN = os.environ.get("GH_DASHBOARD_TOKEN") or os.environ.get("GITHUB_T
 # fields), no .gitignore needed.
 DL_CACHE_PATH = Path("data/dl_cache.json")
 DL_CACHE_STALE_HOURS = 168  # 7 days — beyond this, treat cache as too stale to display
+# R89-60f Feature 3: sparkline 7-day cache TTL. Shorter than DL_CACHE_STALE_HOURS
+# (168h) because sparkline shape matters more than the absolute number; 20h gives
+# roughly daily refresh cadence without a separate API call on every dashboard run
+# once the cache is warm.
+SPARKLINE_CACHE_STALE_HOURS = 20
 
 
 def _fetch_json(
@@ -217,6 +222,100 @@ def _fmt_relative_date(iso: str | None) -> str:
     return f"{years} year{'s' if years > 1 else ''} ago"
 
 
+def _fetch_sparkline_data(
+    pypi_name: str,
+    dl_cache: dict[str, dict[str, Any]],
+) -> list[int]:
+    """Fetch 7-day daily download counts from pypistats overall endpoint.
+    Returns list of up to 7 ints (oldest first) or [] on failure.
+    Reads/writes sparkline_7d + sparkline_at in dl_cache for TTL-gated caching.
+
+    Cache-warm (age <= SPARKLINE_CACHE_STALE_HOURS): instant return, no API call.
+    Cache-cold: PYPISTATS_INTERCALL_DELAY sleep then live fetch. The delay keeps
+    total pypistats rate under the ~10 req/min floor even on cache-cold first runs.
+    """
+    cached = dl_cache.get(pypi_name, {})
+    if cached.get("sparkline_7d") and cached.get("sparkline_at"):
+        try:
+            dt = datetime.fromisoformat(cached["sparkline_at"].replace("Z", "+00:00"))
+            age_h = (datetime.now(timezone.utc) - dt).total_seconds() / 3600
+            if age_h <= SPARKLINE_CACHE_STALE_HOURS:
+                return cached["sparkline_7d"]
+        except (ValueError, TypeError):
+            pass
+
+    # Cache cold or stale — delay then fetch.
+    time.sleep(PYPISTATS_INTERCALL_DELAY)
+    try:
+        data = _fetch_json(
+            f"https://pypistats.org/api/packages/{pypi_name}/overall",
+            accept_404=True,
+            retry_429=True,
+        )
+        if not data or "data" not in data:
+            return cached.get("sparkline_7d") or []
+        entries = [
+            e for e in data["data"]
+            if isinstance(e, dict) and e.get("category") == "without_mirrors"
+        ]
+        entries.sort(key=lambda e: e.get("date", ""))
+        values = [
+            int(e["downloads"])
+            for e in entries[-7:]
+            if e.get("downloads") is not None
+        ]
+        if values:
+            now_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+            dl_cache.setdefault(pypi_name, {})
+            dl_cache[pypi_name]["sparkline_7d"] = values
+            dl_cache[pypi_name]["sparkline_at"] = now_iso
+        return values
+    except Exception:  # noqa: BLE001
+        return cached.get("sparkline_7d") or []
+
+
+def _sparkline_svg(values: list[int]) -> str:
+    """Render a 48×16 inline SVG polyline sparkline from daily download counts.
+    Green (#1a7f37) if last >= first (trend up/flat); amber (#9a6700) if down.
+    Returns '' for < 2 values or flat data (min == max) — no useful visual.
+    The SVG is embedded inline; no external asset, no JS required to display."""
+    if not values or len(values) < 2:
+        return ""
+    mn = min(values)
+    mx = max(values)
+    if mx == mn:
+        return ""  # flat line carries no trend information
+    W, H = 48, 16
+    n = len(values)
+    pts = []
+    for i, v in enumerate(values):
+        x = round(W * i / (n - 1), 1)
+        y = round(H - H * (v - mn) / (mx - mn), 1)
+        pts.append(f"{x},{y}")
+    color = "#1a7f37" if values[-1] >= values[0] else "#9a6700"
+    polyline = " ".join(pts)
+    return (
+        f'<svg width="{W}" height="{H}" viewBox="0 0 {W} {H}"'
+        f' style="vertical-align:middle;overflow:visible" aria-hidden="true">'
+        f'<polyline points="{polyline}" fill="none" stroke="{color}"'
+        f' stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>'
+        f'</svg>'
+    )
+
+
+def _date_to_days(iso: str | None) -> int:
+    """Convert ISO timestamp to integer days-since-today (0=today, 999999=unknown).
+    Used as numeric data-val for client-side sort on date columns (R89-60f F2).
+    Ascending sort = most recent first (0 days, then 3 days, then 30 days…)."""
+    if not iso:
+        return 999999
+    try:
+        dt = datetime.fromisoformat(iso.replace("Z", "+00:00"))
+        return max(0, (datetime.now(timezone.utc) - dt).days)
+    except ValueError:
+        return 999999
+
+
 def _collect_target(
     target: dict[str, Any],
     *,
@@ -232,6 +331,8 @@ def _collect_target(
         "pypi_name": target.get("pypi_name"),
         "gh_repo": target.get("gh_repo"),
         "channels": target.get("channels") or [],  # enhancement B
+        # R89-60f: category tags for client-side filter (sentry-targets.json).
+        "categories": target.get("categories") or [],
         # R89-58f: static fields from config (data-refresh wave; F R89-58f).
         # coverage_pct: test-coverage % from CI badge (F R89-48f badge wave).
         # glama_score: Glama License/Quality/Maintenance grade (e.g. "A/A/B").
@@ -244,6 +345,7 @@ def _collect_target(
         "pypi_summary": None,
         "pypi_downloads_month": None,
         "pypi_downloads_cached_at": None,  # enhancement C: ISO timestamp if cached fallback
+        "sparkline_svg": "",  # R89-60f F3: pre-generated 48×16 SVG string; empty if GH-only or flat
         "gh_release_tag": None,
         "gh_release_date": None,
         "gh_stars": None,
@@ -318,6 +420,12 @@ def _collect_target(
                     row["pypi_downloads_cached_at"] = cached["fetched_at"]
             except (KeyError, ValueError, TypeError):
                 pass
+
+        # R89-60f Feature 3: sparkline 7-day SVG. Fetches pypistats overall
+        # endpoint (with cache; cold fetch adds PYPISTATS_INTERCALL_DELAY
+        # to respect rate limit). SVG embedded inline — no external assets.
+        sparkline_vals = _fetch_sparkline_data(row["pypi_name"], dl_cache)
+        row["sparkline_svg"] = _sparkline_svg(sparkline_vals)
 
     if row["gh_repo"]:
         try:
@@ -463,6 +571,18 @@ tfoot tr.totals .totals-sub { color: #6e7781; font-size: 0.78em; font-weight: 40
 .cov-mid   { color: #9a6700; font-weight: 600; font-variant-numeric: tabular-nums; }
 .cov-low   { color: #cf222e; font-weight: 600; font-variant-numeric: tabular-nums; }
 .glama-score { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.88em; }
+/* R89-60f Phase 3: search/filter bar + mobile table scroll.
+   Vanilla JS progressively enhances; table is fully readable without JS. */
+.filter-bar { display: flex; gap: 0.6em; margin: 0.6em 0 0.4em; flex-wrap: wrap; align-items: center; }
+.filter-bar input, .filter-bar select { padding: 0.35em 0.6em; border: 1px solid #d0d7de; border-radius: 6px; font-size: 0.9em; font-family: inherit; background: #fff; }
+.filter-bar input { min-width: 180px; flex: 1 1 180px; }
+.filter-bar select { min-width: 160px; }
+.no-match { display: none; text-align: center; color: #57606a; font-size: 0.9em; padding: 1em 0; }
+.table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+@media (max-width: 768px) {
+  body { padding: 0 0.5em; }
+  th, td { padding: 0.4em 0.5em; font-size: 0.85em; }
+}
 /* R89-59f Phase 2: brand + narrative section styles.
    Anti-spam discipline (Pattern 35 sister): no email-capture / upsell;
    informational links only. */
@@ -491,6 +611,13 @@ tfoot tr.totals .totals-sub { color: #6e7781; font-size: 0.78em; font-weight: 40
 /* Vendor chips in disclosure chain (Section 5) */
 .vendor-chain { font-size: 0.83em; color: #57606a; margin: 0.3em 0; line-height: 2.0; word-break: break-word; }
 .vendor-chip { display: inline-block; background: #eaeef2; border-radius: 3px; padding: 0 0.35em; margin: 0.05em 0.1em; font-size: 0.9em; color: #24292f; white-space: nowrap; }
+/* R89-60f Feature 2: sortable column headers — sort direction indicator. */
+th.sortable::after { content: ' \2195'; color: #8c959f; font-size: 0.8em; }
+th.sortable[data-sort-dir=asc]::after { content: ' \2191'; color: #0969da; }
+th.sortable[data-sort-dir=desc]::after { content: ' \2193'; color: #0969da; }
+/* R89-60f Feature 4: stale > 24h banner (JS-injected when body.data-generated-at is old).
+   SB-65 sister: surface stale data explicitly rather than silently showing old numbers. */
+.stale-banner { background: #fff8c5; border: 1px solid #d4a72c; border-radius: 6px; padding: 0.6em 1em; margin: 0.6em 0; font-size: 0.87em; color: #633d11; }
 """
 
 
@@ -518,7 +645,12 @@ def _render_row(row: dict[str, Any]) -> str:
     url = row["gh_html_url"] or (f"https://github.com/{row['gh_repo']}" if row["gh_repo"] else "#")
     # R89-58f: description_override takes precedence over GitHub API description.
     # Used for wrg-sigma-rules (61 prod rules → 67 after R89-11d corpus add).
-    desc = html.escape(row.get("description_override") or row["gh_description"] or row["pypi_summary"] or "")
+    desc_raw = row.get("description_override") or row["gh_description"] or row["pypi_summary"] or ""
+    desc = html.escape(desc_raw)
+
+    # R89-60f Feature 1: data-* attrs for client-side search/filter.
+    # data-category = comma-separated category tags from sentry-targets.json.
+    cats_attr = html.escape(",".join(row.get("categories") or []))
 
     name_cell = f'<span class="pkg-name"><a href="{html.escape(url)}">{name}</a></span>'
     if row["gh_license_spdx"]:
@@ -572,8 +704,23 @@ def _render_row(row: dict[str, Any]) -> str:
     else:
         dl_cell = dl_int
 
+    # R89-60f Feature 3: prepend sparkline SVG to downloads cell (inline, no JS needed).
+    sparkline = row.get("sparkline_svg") or ""
+    if sparkline:
+        dl_cell = f'{sparkline}&thinsp;{dl_cell}'
+
+    # R89-60f Feature 2: data-val for numeric sort on sortable columns.
+    # Only emitted when value is known; unknown cells sort to bottom (JS NaN→∞).
+    dl_raw = row["pypi_downloads_month"]
+    dl_val = f' data-val="{dl_raw}"' if dl_raw is not None else ""
+    stars_val = f' data-val="{row["gh_stars"]}"' if row["gh_stars"] is not None else ""
+    forks_val = f' data-val="{row["gh_forks"]}"' if row["gh_forks"] is not None else ""
+    release_val = f' data-val="{_date_to_days(row["gh_release_date"])}"' if row["gh_release_date"] else ""
+    commit_val = f' data-val="{_date_to_days(row["gh_pushed_at"])}"' if row["gh_pushed_at"] else ""
+
     return (
-        "<tr>"
+        # R89-60f Feature 1: data-category/name/desc for search+filter JS.
+        f'<tr data-category="{cats_attr}" data-name="{html.escape(row["name"])}" data-desc="{html.escape(desc_raw)}">'
         f"<td>{name_cell}</td>"
         f'<td class="ver">{html.escape(pypi) if pypi else "<span class=\"muted\">-</span>"}</td>'
         f'<td class="ver">{html.escape(gh) if gh else "<span class=\"muted\">-</span>"}</td>'
@@ -581,11 +728,11 @@ def _render_row(row: dict[str, Any]) -> str:
         f'<td class="metric">{codeql_html}</td>'
         f'<td class="metric">{cov_html}</td>'    # R89-58f coverage col
         f'<td>{glama_html}</td>'                  # R89-58f Glama col
-        f'<td class="metric">{dl_cell}</td>'
-        f'<td class="metric">{_fmt_int(row["gh_stars"])}</td>'
-        f'<td class="metric">{_fmt_int(row["gh_forks"])}</td>'
-        f'<td>{html.escape(_fmt_relative_date(row["gh_release_date"]))}</td>'
-        f'<td>{html.escape(_fmt_relative_date(row["gh_pushed_at"]))}</td>'
+        f'<td class="metric"{dl_val}>{dl_cell}</td>'
+        f'<td class="metric"{stars_val}>{_fmt_int(row["gh_stars"])}</td>'
+        f'<td class="metric"{forks_val}>{_fmt_int(row["gh_forks"])}</td>'
+        f'<td{release_val}>{html.escape(_fmt_relative_date(row["gh_release_date"]))}</td>'
+        f'<td{commit_val}>{html.escape(_fmt_relative_date(row["gh_pushed_at"]))}</td>'
         "</tr>"
     )
 
@@ -722,6 +869,101 @@ the only sigma detection plugin submitted to the Anthropic Claude Code marketpla
 </table>"""
 
 
+# ============================================================
+# R89-60f Phase 3: vanilla JS + filter bar.
+# Brief: .agents/inbox/F/from-A/2026-05-27-2342-r89-60f-portfolio-phase-3-ux-ops.md
+# Pattern 47 reuse>new strict: minimal client-side; no framework deps.
+# IIFE-wrapped; activates via data-* attrs set at generation time.
+# Features 1 (search/filter) + 2 (sortable columns) + 4 (stale banner)
+# all live in _JS so they share one <script> tag.
+# ============================================================
+
+# --- Filter bar HTML (Feature 1) ----------------------------------------
+# Category values must match `categories` arrays in sentry-targets.json.
+_FILTER_BAR_HTML = """\
+<div class="filter-bar">
+  <input type="text" id="pkg-search" placeholder="Search packages…" aria-label="Search packages" />
+  <select id="cat-filter" aria-label="Filter by category">
+    <option value="">All categories</option>
+    <option value="security">Security</option>
+    <option value="sigma">Sigma / Detection</option>
+    <option value="mcp">MCP</option>
+    <option value="ai">AI</option>
+    <option value="devops">DevOps</option>
+    <option value="research">Research</option>
+    <option value="memory">Memory</option>
+  </select>
+</div>"""
+
+
+# --- All vanilla JS (Features 1 + 2 + 4) --------------------------------
+# Single IIFE so no globals leak; data-* attributes on <tr>/<th>/<body> are
+# the only contract between the Python generator and this runtime code.
+_JS = """\
+(function(){
+  // --- Feature 1: search + category filter ---
+  var search=document.getElementById('pkg-search');
+  var catSel=document.getElementById('cat-filter');
+  var tbody=document.querySelector('table tbody');
+  var allRows=tbody?[].slice.call(tbody.querySelectorAll('tr')):[];
+  var noMatch=document.getElementById('filter-no-match');
+  function applyFilter(){
+    var q=search?search.value.toLowerCase():'';
+    var cat=catSel?catSel.value:'';
+    var vis=0;
+    allRows.forEach(function(tr){
+      var nm=(tr.dataset.name||'').toLowerCase();
+      var dc=(tr.dataset.desc||'').toLowerCase();
+      var cats=(tr.dataset.category||'').split(',');
+      var mQ=!q||nm.indexOf(q)!==-1||dc.indexOf(q)!==-1;
+      var mC=!cat||cats.indexOf(cat)!==-1;
+      tr.style.display=(mQ&&mC)?'':'none';
+      if(mQ&&mC)vis++;
+    });
+    if(noMatch)noMatch.style.display=vis===0?'block':'none';
+  }
+  if(search)search.addEventListener('input',applyFilter);
+  if(catSel)catSel.addEventListener('change',applyFilter);
+
+  // --- Feature 2: sortable columns ---
+  var sortCol=-1,sortDir=1;
+  var ths=[].slice.call(document.querySelectorAll('th.sortable'));
+  ths.forEach(function(th){
+    th.style.cursor='pointer';
+    th.title='Click to sort';
+    th.addEventListener('click',function(){
+      var c=parseInt(th.dataset.col,10);
+      if(sortCol===c){sortDir=-sortDir;}else{sortCol=c;sortDir=1;}
+      ths.forEach(function(t){t.removeAttribute('data-sort-dir');});
+      th.setAttribute('data-sort-dir',sortDir===1?'asc':'desc');
+      if(!tbody)return;
+      var rs=[].slice.call(tbody.querySelectorAll('tr'));
+      rs.sort(function(a,b){
+        var ac=a.cells[c],bc=b.cells[c];
+        var av=ac&&ac.dataset?parseFloat(ac.dataset.val):NaN;
+        var bv=bc&&bc.dataset?parseFloat(bc.dataset.val):NaN;
+        if(isNaN(av))av=Infinity;if(isNaN(bv))bv=Infinity;
+        return (av-bv)*sortDir;
+      });
+      rs.forEach(function(r){tbody.appendChild(r);});
+    });
+  });
+
+  // --- Feature 4: stale > 24h banner ---
+  var genAt=document.body&&document.body.dataset.generatedAt;
+  if(genAt){
+    var ageH=(Date.now()-new Date(genAt).getTime())/3600000;
+    if(ageH>24){
+      var b=document.createElement('div');
+      b.className='stale-banner';
+      b.textContent='⚠️ Dashboard data is '+Math.round(ageH)+'h old — GHA cron may be paused (billing gate). Run dashboard.py locally to refresh.';
+      var h1=document.querySelector('h1');
+      if(h1&&h1.parentNode)h1.parentNode.insertBefore(b,h1.nextSibling);
+    }
+  }
+})();"""
+
+
 def _render_totals_row(rows: list[dict[str, Any]]) -> str:
     """R89-18a enhancement A: aggregate totals as a tfoot row.
     Renders the single-line scale signal — package count, total
@@ -778,7 +1020,7 @@ def _render_html(rows: list[dict[str, Any]], generated_at: datetime) -> str:
 <title>WRG-11 Portfolio</title>
 <style>{_CSS}</style>
 </head>
-<body>
+<body data-generated-at="{generated_at.isoformat()}">
   <h1>WRG-11 Portfolio</h1>
   <p class="lede">Open-source security tooling for AI/LLM defense, detection
   engineering, threat intelligence, and OSINT. Zero-dependency Python where
@@ -786,6 +1028,8 @@ def _render_html(rows: list[dict[str, Any]], generated_at: datetime) -> str:
   {_MILESTONE_BANNER}
   <p><strong>Snapshot:</strong> {summary}</p>
 
+  {_FILTER_BAR_HTML}
+  <div class="table-wrapper">
   <table>
     <thead>
       <tr>
@@ -796,11 +1040,11 @@ def _render_html(rows: list[dict[str, Any]], generated_at: datetime) -> str:
         <th>CodeQL alerts</th>
         <th>Coverage</th>
         <th>Glama</th>
-        <th>Downloads (30d)</th>
-        <th>Stars</th>
-        <th>Forks</th>
-        <th>Last release</th>
-        <th>Last commit</th>
+        <th class="sortable" data-col="7">Downloads (30d)</th>
+        <th class="sortable" data-col="8">Stars</th>
+        <th class="sortable" data-col="9">Forks</th>
+        <th class="sortable" data-col="10">Last release</th>
+        <th class="sortable" data-col="11">Last commit</th>
       </tr>
     </thead>
     <tbody>
@@ -810,6 +1054,8 @@ def _render_html(rows: list[dict[str, Any]], generated_at: datetime) -> str:
       {totals_row}
     </tfoot>
   </table>
+  <p id="filter-no-match" class="no-match">No packages match your filter.</p>
+  </div>
   {_CHANNEL_SECTION_HTML}
   <div class="info-grid">
   {_DF_CTA_HTML}
@@ -822,8 +1068,9 @@ def _render_html(rows: list[dict[str, Any]], generated_at: datetime) -> str:
     <a href="https://github.com/WRG-11/wrg-portfolio">wrg-portfolio</a>
     (version-sentry sister). Daily auto-refresh via GitHub Actions cron.
     Data sources: pypi.org, pypistats.org, api.github.com. No tracking,
-    no JavaScript, no external assets.
+    minimal vanilla JS, no external assets.
   </p>
+  <script>{_JS}</script>
 </body>
 </html>
 """
