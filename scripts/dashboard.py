@@ -72,6 +72,11 @@ GH_AUTH_TOKEN = os.environ.get("GH_DASHBOARD_TOKEN") or os.environ.get("GITHUB_T
 # fields), no .gitignore needed.
 DL_CACHE_PATH = Path("data/dl_cache.json")
 DL_CACHE_STALE_HOURS = 168  # 7 days — beyond this, treat cache as too stale to display
+# R89-60f Feature 3: sparkline 7-day cache TTL. Shorter than DL_CACHE_STALE_HOURS
+# (168h) because sparkline shape matters more than the absolute number; 20h gives
+# roughly daily refresh cadence without a separate API call on every dashboard run
+# once the cache is warm.
+SPARKLINE_CACHE_STALE_HOURS = 20
 
 
 def _fetch_json(
@@ -217,6 +222,87 @@ def _fmt_relative_date(iso: str | None) -> str:
     return f"{years} year{'s' if years > 1 else ''} ago"
 
 
+def _fetch_sparkline_data(
+    pypi_name: str,
+    dl_cache: dict[str, dict[str, Any]],
+) -> list[int]:
+    """Fetch 7-day daily download counts from pypistats overall endpoint.
+    Returns list of up to 7 ints (oldest first) or [] on failure.
+    Reads/writes sparkline_7d + sparkline_at in dl_cache for TTL-gated caching.
+
+    Cache-warm (age <= SPARKLINE_CACHE_STALE_HOURS): instant return, no API call.
+    Cache-cold: PYPISTATS_INTERCALL_DELAY sleep then live fetch. The delay keeps
+    total pypistats rate under the ~10 req/min floor even on cache-cold first runs.
+    """
+    cached = dl_cache.get(pypi_name, {})
+    if cached.get("sparkline_7d") and cached.get("sparkline_at"):
+        try:
+            dt = datetime.fromisoformat(cached["sparkline_at"].replace("Z", "+00:00"))
+            age_h = (datetime.now(timezone.utc) - dt).total_seconds() / 3600
+            if age_h <= SPARKLINE_CACHE_STALE_HOURS:
+                return cached["sparkline_7d"]
+        except (ValueError, TypeError):
+            pass
+
+    # Cache cold or stale — delay then fetch.
+    time.sleep(PYPISTATS_INTERCALL_DELAY)
+    try:
+        data = _fetch_json(
+            f"https://pypistats.org/api/packages/{pypi_name}/overall",
+            accept_404=True,
+            retry_429=True,
+        )
+        if not data or "data" not in data:
+            return cached.get("sparkline_7d") or []
+        entries = [
+            e for e in data["data"]
+            if isinstance(e, dict) and e.get("category") == "without_mirrors"
+        ]
+        entries.sort(key=lambda e: e.get("date", ""))
+        values = [
+            int(e["downloads"])
+            for e in entries[-7:]
+            if e.get("downloads") is not None
+        ]
+        if values:
+            now_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+            dl_cache.setdefault(pypi_name, {})
+            dl_cache[pypi_name]["sparkline_7d"] = values
+            dl_cache[pypi_name]["sparkline_at"] = now_iso
+        return values
+    except Exception:  # noqa: BLE001
+        return cached.get("sparkline_7d") or []
+
+
+def _sparkline_svg(values: list[int]) -> str:
+    """Render a 48×16 inline SVG polyline sparkline from daily download counts.
+    Green (#1a7f37) if last >= first (trend up/flat); amber (#9a6700) if down.
+    Returns '' for < 2 values or flat data (min == max) — no useful visual.
+    The SVG is embedded inline; no external asset, no JS required to display."""
+    if not values or len(values) < 2:
+        return ""
+    mn = min(values)
+    mx = max(values)
+    if mx == mn:
+        return ""  # flat line carries no trend information
+    W, H = 48, 16
+    n = len(values)
+    pts = []
+    for i, v in enumerate(values):
+        x = round(W * i / (n - 1), 1)
+        y = round(H - H * (v - mn) / (mx - mn), 1)
+        pts.append(f"{x},{y}")
+    color = "#1a7f37" if values[-1] >= values[0] else "#9a6700"
+    polyline = " ".join(pts)
+    return (
+        f'<svg width="{W}" height="{H}" viewBox="0 0 {W} {H}"'
+        f' style="vertical-align:middle;overflow:visible" aria-hidden="true">'
+        f'<polyline points="{polyline}" fill="none" stroke="{color}"'
+        f' stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>'
+        f'</svg>'
+    )
+
+
 def _date_to_days(iso: str | None) -> int:
     """Convert ISO timestamp to integer days-since-today (0=today, 999999=unknown).
     Used as numeric data-val for client-side sort on date columns (R89-60f F2).
@@ -259,6 +345,7 @@ def _collect_target(
         "pypi_summary": None,
         "pypi_downloads_month": None,
         "pypi_downloads_cached_at": None,  # enhancement C: ISO timestamp if cached fallback
+        "sparkline_svg": "",  # R89-60f F3: pre-generated 48×16 SVG string; empty if GH-only or flat
         "gh_release_tag": None,
         "gh_release_date": None,
         "gh_stars": None,
@@ -333,6 +420,12 @@ def _collect_target(
                     row["pypi_downloads_cached_at"] = cached["fetched_at"]
             except (KeyError, ValueError, TypeError):
                 pass
+
+        # R89-60f Feature 3: sparkline 7-day SVG. Fetches pypistats overall
+        # endpoint (with cache; cold fetch adds PYPISTATS_INTERCALL_DELAY
+        # to respect rate limit). SVG embedded inline — no external assets.
+        sparkline_vals = _fetch_sparkline_data(row["pypi_name"], dl_cache)
+        row["sparkline_svg"] = _sparkline_svg(sparkline_vals)
 
     if row["gh_repo"]:
         try:
@@ -607,6 +700,11 @@ def _render_row(row: dict[str, Any]) -> str:
         dl_cell = f'{dl_int} <span class="cached-tag">{html.escape(age)}</span>'
     else:
         dl_cell = dl_int
+
+    # R89-60f Feature 3: prepend sparkline SVG to downloads cell (inline, no JS needed).
+    sparkline = row.get("sparkline_svg") or ""
+    if sparkline:
+        dl_cell = f'{sparkline}&thinsp;{dl_cell}'
 
     # R89-60f Feature 2: data-val for numeric sort on sortable columns.
     # Only emitted when value is known; unknown cells sort to bottom (JS NaN→∞).
