@@ -5,7 +5,7 @@
       "name": "wrg-mcp-server",
       "pypi_name": "wrg-mcp-server",
       "gh_repo": "WRG-11/wrg-mcp-server",
-      "channels": ["pypi", "github"],
+      "channels": ["pypi", "github", "mcp_registry"],
       "categories": ["security", "mcp"],
       "coverage_pct": 95
     },
@@ -46,12 +46,13 @@
     },
     {
       "name": "arastirma-ussu",
-      "_note": "GitHub-only. Turkish AI research assistant: 5-layer stack (Ollama + Qdrant + FAISS + MCP server + memory). PUBLIC 2026-05-27 (operator karar post R89-44g OPSEC audit). Coverage 72% (F R89-48f badge wave). No PyPI release yet.",
+      "_note": "GitHub-only. Turkish AI research assistant: 5-layer stack (Ollama + Qdrant + FAISS + MCP server + memory). PUBLIC 2026-05-27 (operator karar post R89-44g OPSEC audit). Coverage 72% (F R89-48f badge wave). No PyPI release yet. 8 security fixes FULL-LIVE 2026-05-28 (R89-65b: 3 CRIT TOCTOU lru_cache + 5 HIGH error-handling + prompt-injection defense).",
       "pypi_name": null,
       "gh_repo": "WRG-11/arastirma-ussu",
       "channels": ["github"],
       "categories": ["ai", "research", "mcp"],
-      "coverage_pct": 72
+      "coverage_pct": 72,
+      "description_override": "Turkish AI research assistant (Ollama + Qdrant + FAISS + MCP server + memory). 8 security fixes FULL-LIVE: 3 CRIT TOCTOU + 5 HIGH error-handling + prompt-injection defense. Coverage: 72%."
     }
   ]
 }

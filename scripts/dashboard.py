@@ -550,6 +550,7 @@ tr:hover td { background: #fafbfc; }
 .channel-chip.ch-anthropic-pending { background: #f5e6ff; color: #8250df; opacity: 0.7; font-style: italic; }
 .channel-chip.ch-docker            { background: #ddebff; color: #0969da; }
 .channel-chip.ch-skills            { background: #fff0e6; color: #bc4c00; }
+.channel-chip.ch-mcp-registry      { background: #d0f0e8; color: #0a6860; }
 .channel-chip.ch-other             { background: #f6f8fa; color: #57606a; }
 /* R89-18a enhancement C: stale-cache indicator on download numbers.
    Small, muted, not alarming — the number is still real, just last-known. */
@@ -747,6 +748,7 @@ def _channel_chip(channel: str) -> tuple[str, str]:
         "anthropic_cc_pending":   ("ch-anthropic-pending", "Anthropic CC ⏳"),
         "docker_mcp_catalog":     ("ch-docker", "Docker MCP"),
         "skills_sh":              ("ch-skills", "skills.sh"),
+        "mcp_registry":           ("ch-mcp-registry", "MCP Registry"),
     }
     return table.get(channel, ("ch-other", channel.replace("_", " ")))
 
@@ -769,6 +771,12 @@ _MILESTONE_BANNER = """\
     <li>DRY documentation architecture &#x2014; single-source topology canonical; roster drift vector eliminated (Pattern 47 docs-applied 1st-vaka)</li>
     <li>5-subagent helper class FORMAL SEAL &#x2014; inbox-triager + OPSEC-scanner + brief-validator + cross-repo-sweeper + template-generator</li>
     <li>DECADE+23 milestone &#x2014; 33-pattern research catalog; Pattern 27 Track A 15-vaka convergent external-anchor chain</li>
+  </ul>
+  <strong>&#x1F4E6; 2026-05-28 milestones</strong>
+  <ul>
+    <li>MCP Registry LIVE &#x2014; wrg-mcp-server v1.0.7 active (Pattern 45 3/5 channels: Glama + awesome-mcp-servers + MCP Registry)</li>
+    <li>arastirma-ussu 8 security fixes FULL-LIVE &#x2014; 3 CRIT TOCTOU (lru_cache singleton) + 5 HIGH error-handling + prompt-injection defense</li>
+    <li>DECADE+24 milestone &#x2014; 34-pattern research catalog (E &#xA7;15.51 formal graduation hub; 5 new pattern formalizations)</li>
   </ul>
 </div>"""
 
@@ -805,7 +813,8 @@ _SUBAGENT_BOX_HTML = """\
 
 
 # --- Section 5: 16-vendor responsible disclosure chain --------------------
-# R60→R82 sprints. 15 vendors listed in brief; CrewAI confirmed 16th per §15.37.
+# R60→R82 sprints. 15 vendors in original brief; CrewAI confirmed 16th per §15.37.
+# Anthropic Project Glasswing added 2026-05-28 (SB-86 chain count fix; total now 16).
 # Link target: WRG-11/WinstonRedGuard monorepo (public research notes).
 # HTML entities used for arrows to avoid encoding issues in static page.
 _DISCLOSURE_CHAIN_HTML = """\
@@ -826,7 +835,8 @@ _DISCLOSURE_CHAIN_HTML = """\
       <span class="vendor-chip">Kubernetes ingress&#x2011;nginx</span> &#x2192;
       <span class="vendor-chip">Microsoft Hyper&#x2011;V</span> &#x2192;
       <span class="vendor-chip">LangChain</span> &#x2192;
-      <span class="vendor-chip">CrewAI</span>
+      <span class="vendor-chip">CrewAI</span> &#x2192;
+      <span class="vendor-chip">Anthropic Project Glasswing</span>
     </p>
     <p><a href="https://github.com/WRG-11/WinstonRedGuard">Full chain &#x2197;</a>
     <span style="color:#8c959f;font-size:0.78em">&middot; responsible disclosure; CVE-ID data in research notes</span></p>
@@ -838,7 +848,7 @@ _CHANNEL_SECTION_HTML = """\
 <h2 class="section-heading">MCP marketplace distribution</h2>
 <p style="font-size:0.85em;color:#57606a;margin:0.3em 0 0.8em;"><strong>wrg-sigma-rules</strong> is
 the only sigma detection plugin submitted to the Anthropic Claude Code marketplace. Pattern 45
-5-channel state verified 2026-05-27.</p>
+5-channel state: 3/5 active (Glama + awesome-mcp-servers + MCP Registry); verified 2026-05-28.</p>
 <table class="ch-matrix">
   <thead>
     <tr>
@@ -859,9 +869,16 @@ the only sigma detection plugin submitted to the Anthropic Claude Code marketpla
       <td class="ch-absent">&#x2014;</td>
       <td class="ch-absent">&#x2014;</td>
     </tr>
-    <tr><td>wrg-mcp-server</td><td colspan="5" class="ch-absent" style="font-size:0.82em;">PyPI + GitHub only (MCP tools via PyPI, not in MCP marketplace)</td></tr>
+    <tr>
+      <td>wrg-mcp-server</td>
+      <td class="ch-absent">&#x2014;</td>
+      <td class="ch-absent">&#x2014;</td>
+      <td class="ch-absent">&#x2014;</td>
+      <td class="ch-present">&#x2705; <a href="https://registry.modelcontextprotocol.io/v0/servers?search=WRG-11" style="color:inherit">v1.0.7</a></td>
+      <td class="ch-absent">&#x2014;</td>
+    </tr>
     <tr><td>instinct</td><td colspan="5" class="ch-absent" style="font-size:0.82em;">PyPI + GitHub only</td></tr>
-    <tr><td>arastirma-ussu</td><td colspan="5" class="ch-absent" style="font-size:0.82em;">GitHub only (MCP server; marketplaces not yet targeted)</td></tr>
+    <tr><td>arastirma-ussu</td><td colspan="5" class="ch-absent" style="font-size:0.82em;">GitHub only (MCP server; 8 security fixes FULL-LIVE 2026-05-28: 3 CRIT TOCTOU + 5 HIGH)</td></tr>
     <tr><td>wrg-rule-lab</td><td colspan="5" class="ch-absent" style="font-size:0.82em;">PyPI + GitHub only (Python library)</td></tr>
     <tr><td>wrg-devguard</td><td colspan="5" class="ch-absent" style="font-size:0.82em;">PyPI + GitHub only (CLI + GitHub Action)</td></tr>
   </tbody>
