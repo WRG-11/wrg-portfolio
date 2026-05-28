@@ -1,6 +1,6 @@
 {
   "instinct-mcp": {
-    "fetched_at": "2026-05-28T22:23:09Z",
+    "fetched_at": "2026-05-28T22:35:18Z",
     "last_month": 274,
     "sparkline_7d": [
       6,
@@ -11,10 +11,10 @@
       1,
       13
     ],
-    "sparkline_at": "2026-05-28T22:23:12Z"
+    "sparkline_at": "2026-05-28T22:35:21Z"
   },
   "wrg-devguard": {
-    "fetched_at": "2026-05-28T22:26:12Z",
+    "fetched_at": "2026-05-28T22:35:03Z",
     "last_month": 597,
     "sparkline_7d": [
       6,
@@ -25,10 +25,10 @@
       48,
       64
     ],
-    "sparkline_at": "2026-05-28T22:26:15Z"
+    "sparkline_at": "2026-05-28T22:35:06Z"
   },
   "wrg-mcp-server": {
-    "fetched_at": "2026-05-28T22:22:29Z",
+    "fetched_at": "2026-05-28T22:34:43Z",
     "last_month": 511,
     "sparkline_7d": [
       1,
@@ -39,7 +39,7 @@
       21,
       11
     ],
-    "sparkline_at": "2026-05-28T22:22:33Z"
+    "sparkline_at": "2026-05-28T22:34:46Z"
   },
   "wrg-rule-lab": {
     "fetched_at": "2026-05-27T22:26:44Z",

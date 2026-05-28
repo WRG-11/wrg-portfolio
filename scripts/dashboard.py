@@ -774,16 +774,11 @@ _MILESTONE_BANNER = """\
   </ul>
   <strong>&#x1F4E6; 2026-05-28 milestones</strong>
   <ul>
-    <li>MCP Registry LIVE &#x2014; wrg-mcp-server v1.0.7 active (Pattern 45 3/5 channels: Glama + awesome-mcp-servers + MCP Registry)</li>
-    <li>arastirma-ussu 8 security fixes FULL-LIVE &#x2014; 3 CRIT TOCTOU (lru_cache singleton) + 5 HIGH error-handling + prompt-injection defense</li>
-    <li>DECADE+24 milestone &#x2014; 34-pattern research catalog (E &#xA7;15.51 formal graduation hub; 5 new pattern formalizations)</li>
-  </ul>
-  <strong>&#x1F4E6; 2026-05-28 (evening) milestones</strong>
-  <ul>
-    <li>DECADE+25 milestone &#x2014; 35-pattern research catalog (E &#xA7;15.52 formal graduation hub; 14th consecutive drift-free section)</li>
-    <li>Pattern 48 cross-domain FORMAL &#x2014; silent-semantic-violation 3-vaka (Loud-Python + Google recovery body-abuse + CLIProxyAPI grey-market: canonical &#x201C;infrastructure-PASS / intent-VIOLATE&#x201D; mechanism)</li>
-    <li>OPERATOR-CO-AUTH-split discipline FORMAL &#x2014; 3-vaka (R89-69f + R89-75f + R89-76f: canonical &#x201C;F-credential-insufficient &#x2192; operator-credential applied&#x201D; mechanism)</li>
-    <li>Pattern 27 Track A 18-vaka &#x2014; MATURE EXTENDED+++++ (Google recovery body-abuse 17. + CLIProxyAPI grey-market 18. cross-vendor convergent)</li>
+    <li>wrg-mcp-server now listed on the MCP Registry, Glama, and awesome-mcp-servers (3 of 5 target distribution channels live)</li>
+    <li>arastirma-ussu: 8 security fixes shipped &#x2014; 3 critical (cache race conditions) + 5 high-severity (error-handling + prompt-injection defense)</li>
+    <li>Research pattern catalog grew to 35 documented threat &amp; defense patterns</li>
+    <li>New detection pattern formalized &#x2014; &#x201C;silent semantic violation&#x201D;: systems that pass infrastructure/auth checks while violating intent (phishing via account-recovery flows; grey-market AI API supply chains)</li>
+    <li>A recurring cross-vendor threat pattern is now tracked across 18 documented field cases</li>
   </ul>
 </div>"""
 
@@ -807,7 +802,7 @@ _DF_CTA_HTML = """\
 # Hardcoded (brief Q4 F karar: stable 5-vaka FORMAL SEAL; dynamic Phase 3 candidate).
 _SUBAGENT_BOX_HTML = """\
   <div class="info-card">
-    <h3>&#x1F916; Subagent helpers <span style="font-weight:400;color:#57606a;font-size:0.85em">(FORMAL SEAL)</span></h3>
+    <h3>&#x1F916; Reusable agent helpers</h3>
     <ul>
       <li>&#x2705; <strong>inbox-triager</strong> &#x2014; async dispatch on session-start</li>
       <li>&#x2705; <strong>cross-repo-pr-sweeper</strong> &#x2014; portfolio PR enumerate</li>
@@ -815,7 +810,7 @@ _SUBAGENT_BOX_HTML = """\
       <li>&#x2705; <strong>brief-validator</strong> &#x2014; SB-57 spec-drift mitigation</li>
       <li>&#x2705; <strong>brief-template-generator</strong> &#x2014; frontmatter discipline</li>
     </ul>
-    <p style="margin-top:0.5em;font-size:0.78em;color:#8c959f;">A-orchestration-time class &middot; 5 LIVE &middot; 2026-05-27 FORMAL SEAL</p>
+    <p style="margin-top:0.5em;font-size:0.78em;color:#8c959f;">5 helpers &middot; shared across the agent workflow</p>
   </div>"""
 
 
@@ -854,8 +849,8 @@ _DISCLOSURE_CHAIN_HTML = """\
 _CHANNEL_SECTION_HTML = """\
 <h2 class="section-heading">MCP marketplace distribution</h2>
 <p style="font-size:0.85em;color:#57606a;margin:0.3em 0 0.8em;"><strong>wrg-sigma-rules</strong> is
-the only sigma detection plugin submitted to the Anthropic Claude Code marketplace. Pattern 45
-5-channel state: 3/5 LIVE + 1 IN-FLIGHT (Glama + awesome-mcp-servers + MCP Registry LIVE; Docker MCP Catalog <a href="https://github.com/docker/mcp-registry/pull/3836" style="color:inherit">PR #3836</a> OPEN; Anthropic CC pending); verified 2026-05-28.</p>
+the only sigma detection plugin submitted to the Anthropic Claude Code marketplace. Live on 3 of 5
+target distribution channels (Glama, awesome-mcp-servers, MCP Registry); Docker MCP Catalog <a href="https://github.com/docker/mcp-registry/pull/3836" style="color:inherit">PR #3836</a> open; Anthropic CC listing pending. Verified 2026-05-28.</p>
 <table class="ch-matrix">
   <thead>
     <tr>

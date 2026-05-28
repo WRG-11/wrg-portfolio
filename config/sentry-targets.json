@@ -52,7 +52,7 @@
       "channels": ["github"],
       "categories": ["ai", "research", "mcp"],
       "coverage_pct": 72,
-      "description_override": "Turkish AI research assistant (Ollama + Qdrant + FAISS + MCP server + memory). 8 security fixes FULL-LIVE: 3 CRIT TOCTOU + 5 HIGH error-handling + prompt-injection defense. Coverage: 72%."
+      "description_override": "Turkish AI research assistant (Ollama + Qdrant + FAISS + MCP server + memory). 8 security fixes shipped: 3 critical (cache race conditions) + 5 high-severity (error-handling + prompt-injection defense). Coverage 72%."
     }
   ]
 }
