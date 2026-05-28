@@ -765,12 +765,12 @@ def _channel_chip(channel: str) -> tuple[str, str]:
 # Public-facing language: internal sprint codes translated to technical substance.
 _MILESTONE_BANNER = """\
 <div class="milestone-banner">
-  <strong>&#x1F393; 2026-05-27 milestones</strong>
+  <strong>&#x1F393; Recent milestones (2026-05-27)</strong>
   <ul>
-    <li>Sigma cycle methodology FORMAL &#x2014; 3-cycle B+V validation chain; 0/67 rule false-positives across all 10 MITRE ATT&amp;CK categories (R89-56v SATURATION-CONFIRMED)</li>
-    <li>DRY documentation architecture &#x2014; single-source topology canonical; roster drift vector eliminated (Pattern 47 docs-applied 1st-vaka)</li>
-    <li>5-subagent helper class FORMAL SEAL &#x2014; inbox-triager + OPSEC-scanner + brief-validator + cross-repo-sweeper + template-generator</li>
-    <li>DECADE+23 milestone &#x2014; 33-pattern research catalog; Pattern 27 Track A 15-vaka convergent external-anchor chain</li>
+    <li>Sigma detection methodology validated &#x2014; 0 / 67 rule false-positives across all 10 MITRE ATT&amp;CK categories, confirmed over three independent test cycles</li>
+    <li>Single-source documentation architecture &#x2014; one canonical topology definition eliminates roster drift across the docs</li>
+    <li>Five reusable agent helpers shipped &#x2014; inbox triage, OPSEC/PII scan, brief validation, cross-repo PR sweep, template generation</li>
+    <li>Research catalog &#x2014; 33 documented threat &amp; defense patterns from field analysis, including a convergent multi-vendor supply-chain risk chain</li>
   </ul>
   <strong>&#x1F4E6; 2026-05-28 milestones</strong>
   <ul>
@@ -1040,7 +1040,21 @@ def _render_html(rows: list[dict[str, Any]], generated_at: datetime) -> str:
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>WRG-11 Portfolio</title>
+<title>WRG-11 Portfolio &#x2014; open-source AI/LLM security tooling</title>
+<meta name="description" content="Open-source security tooling for AI/LLM defense, detection engineering, threat intelligence, and OSINT. Sigma detection rules, MCP server, dev policy scanner &#x2014; zero-dependency Python, MIT licensed." />
+<link rel="canonical" href="https://wrg-11.github.io/wrg-portfolio/" />
+<meta name="theme-color" content="#0969da" />
+<link rel="icon" href="https://github.com/WRG-11.png" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="WRG-11" />
+<meta property="og:title" content="WRG-11 Portfolio &#x2014; open-source AI/LLM security tooling" />
+<meta property="og:description" content="Sigma detection rules, MCP server, dev policy scanner, threat-intel + OSINT. Zero-dependency Python, MIT licensed." />
+<meta property="og:url" content="https://wrg-11.github.io/wrg-portfolio/" />
+<meta property="og:image" content="https://github.com/WRG-11.png" />
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:title" content="WRG-11 Portfolio &#x2014; open-source AI/LLM security tooling" />
+<meta name="twitter:description" content="Sigma detection rules, MCP server, dev policy scanner, threat-intel + OSINT. Zero-dependency Python, MIT licensed." />
+<meta name="twitter:image" content="https://github.com/WRG-11.png" />
 <style>{_CSS}</style>
 </head>
 <body data-generated-at="{generated_at.isoformat()}">

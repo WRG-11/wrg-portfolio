@@ -1,58 +1,58 @@
 {
   "instinct-mcp": {
-    "fetched_at": "2026-05-27T21:01:52Z",
-    "last_month": 267,
+    "fetched_at": "2026-05-28T22:23:09Z",
+    "last_month": 274,
     "sparkline_7d": [
-      6,
       6,
       80,
       28,
       11,
       16,
-      1
+      1,
+      13
     ],
-    "sparkline_at": "2026-05-27T22:27:19Z"
+    "sparkline_at": "2026-05-28T22:23:12Z"
   },
   "wrg-devguard": {
-    "fetched_at": "2026-05-27T22:27:00Z",
-    "last_month": 567,
+    "fetched_at": "2026-05-28T22:26:12Z",
+    "last_month": 597,
     "sparkline_7d": [
-      1,
       6,
       104,
       255,
       18,
       15,
-      48
+      48,
+      64
     ],
-    "sparkline_at": "2026-05-27T22:27:03Z"
+    "sparkline_at": "2026-05-28T22:26:15Z"
   },
   "wrg-mcp-server": {
-    "fetched_at": "2026-05-27T22:03:22Z",
-    "last_month": 506,
+    "fetched_at": "2026-05-28T22:22:29Z",
+    "last_month": 511,
     "sparkline_7d": [
-      2,
       1,
       8,
       84,
       303,
       22,
-      21
+      21,
+      11
     ],
-    "sparkline_at": "2026-05-27T22:26:40Z"
+    "sparkline_at": "2026-05-28T22:22:33Z"
   },
   "wrg-rule-lab": {
     "fetched_at": "2026-05-27T22:26:44Z",
     "last_month": 371,
     "sparkline_7d": [
       2,
-      2,
       93,
       217,
       14,
       8,
-      8
+      8,
+      14
     ],
-    "sparkline_at": "2026-05-27T22:26:48Z"
+    "sparkline_at": "2026-05-28T22:22:48Z"
   }
 }

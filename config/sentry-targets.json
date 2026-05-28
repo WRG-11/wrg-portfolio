@@ -41,7 +41,7 @@
       "gh_repo": "WRG-11/wrg-sigma-rules",
       "channels": ["github", "glama", "anthropic_cc_pending"],
       "categories": ["security", "sigma", "detection", "mcp"],
-      "description_override": "67 sigma rules (61 Pazartesi + 6 R89-11d) — corpus full-clean 0/10 benign FP ALL 10 MITRE categories (R89-56v SATURATION-CONFIRMED) + 3 MCP tools + 3 skills.",
+      "description_override": "67 sigma detection rules — 0 benign false-positives across all 10 MITRE ATT&CK categories. Includes 3 MCP tools + 3 Claude Code skills.",
       "glama_score": "A/A/B"
     },
     {
