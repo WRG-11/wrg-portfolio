@@ -778,6 +778,13 @@ _MILESTONE_BANNER = """\
     <li>arastirma-ussu 8 security fixes FULL-LIVE &#x2014; 3 CRIT TOCTOU (lru_cache singleton) + 5 HIGH error-handling + prompt-injection defense</li>
     <li>DECADE+24 milestone &#x2014; 34-pattern research catalog (E &#xA7;15.51 formal graduation hub; 5 new pattern formalizations)</li>
   </ul>
+  <strong>&#x1F4E6; 2026-05-28 (evening) milestones</strong>
+  <ul>
+    <li>DECADE+25 milestone &#x2014; 35-pattern research catalog (E &#xA7;15.52 formal graduation hub; 14th consecutive drift-free section)</li>
+    <li>Pattern 48 cross-domain FORMAL &#x2014; silent-semantic-violation 3-vaka (Loud-Python + Google recovery body-abuse + CLIProxyAPI grey-market: canonical &#x201C;infrastructure-PASS / intent-VIOLATE&#x201D; mechanism)</li>
+    <li>OPERATOR-CO-AUTH-split discipline FORMAL &#x2014; 3-vaka (R89-69f + R89-75f + R89-76f: canonical &#x201C;F-credential-insufficient &#x2192; operator-credential applied&#x201D; mechanism)</li>
+    <li>Pattern 27 Track A 18-vaka &#x2014; MATURE EXTENDED+++++ (Google recovery body-abuse 17. + CLIProxyAPI grey-market 18. cross-vendor convergent)</li>
+  </ul>
 </div>"""
 
 
@@ -848,7 +855,7 @@ _CHANNEL_SECTION_HTML = """\
 <h2 class="section-heading">MCP marketplace distribution</h2>
 <p style="font-size:0.85em;color:#57606a;margin:0.3em 0 0.8em;"><strong>wrg-sigma-rules</strong> is
 the only sigma detection plugin submitted to the Anthropic Claude Code marketplace. Pattern 45
-5-channel state: 3/5 active (Glama + awesome-mcp-servers + MCP Registry); verified 2026-05-28.</p>
+5-channel state: 3/5 LIVE + 1 IN-FLIGHT (Glama + awesome-mcp-servers + MCP Registry LIVE; Docker MCP Catalog <a href="https://github.com/docker/mcp-registry/pull/3836" style="color:inherit">PR #3836</a> OPEN; Anthropic CC pending); verified 2026-05-28.</p>
 <table class="ch-matrix">
   <thead>
     <tr>
@@ -875,7 +882,7 @@ the only sigma detection plugin submitted to the Anthropic Claude Code marketpla
       <td class="ch-absent">&#x2014;</td>
       <td class="ch-absent">&#x2014;</td>
       <td class="ch-present">&#x2705; <a href="https://registry.modelcontextprotocol.io/v0/servers?search=WRG-11" style="color:inherit">v1.0.7</a></td>
-      <td class="ch-absent">&#x2014;</td>
+      <td class="ch-pending">&#x23F3; <a href="https://github.com/docker/mcp-registry/pull/3836" style="color:inherit">PR #3836 OPEN</a></td>
     </tr>
     <tr><td>instinct</td><td colspan="5" class="ch-absent" style="font-size:0.82em;">PyPI + GitHub only</td></tr>
     <tr><td>arastirma-ussu</td><td colspan="5" class="ch-absent" style="font-size:0.82em;">GitHub only (MCP server; 8 security fixes FULL-LIVE 2026-05-28: 3 CRIT TOCTOU + 5 HIGH)</td></tr>
