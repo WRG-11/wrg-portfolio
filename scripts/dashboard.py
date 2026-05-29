@@ -653,7 +653,7 @@ def _render_row(row: dict[str, Any]) -> str:
     name_cell = f'<span class="pkg-name"><a href="{html.escape(url)}">{name}</a></span>'
     if row["gh_license_spdx"]:
         name_cell += f'<span class="license-chip">{html.escape(row["gh_license_spdx"])}</span>'
-    # R89-18a enhancement B: marketplace channel chips next to license.
+    # Marketplace channel chips next to license.
     # Surfaces multi-channel distribution (PyPI / Glama / Anthropic CC, etc.)
     # so visitors see WHERE each package ships from at a glance.
     for ch in row.get("channels") or []:
@@ -805,7 +805,7 @@ _SUBAGENT_BOX_HTML = """\
       <li>&#x2705; <strong>inbox-triager</strong> &#x2014; async dispatch on session-start</li>
       <li>&#x2705; <strong>cross-repo-pr-sweeper</strong> &#x2014; portfolio PR enumerate</li>
       <li>&#x2705; <strong>opsec-pii-scanner</strong> &#x2014; Tier 1/2/3 PII + false-flag matrix</li>
-      <li>&#x2705; <strong>brief-validator</strong> &#x2014; SB-57 spec-drift mitigation</li>
+      <li>&#x2705; <strong>brief-validator</strong> &#x2014; spec-drift mitigation (brief pre-flight validation)</li>
       <li>&#x2705; <strong>brief-template-generator</strong> &#x2014; frontmatter discipline</li>
     </ul>
     <p style="margin-top:0.5em;font-size:0.78em;color:#8c959f;">5 helpers &middot; shared across the agent workflow</p>
@@ -813,13 +813,13 @@ _SUBAGENT_BOX_HTML = """\
 
 
 # --- Section 5: 16-vendor responsible disclosure chain --------------------
-# R60→R82 sprints. 15 vendors in original brief; CrewAI confirmed 16th per §15.37.
-# Anthropic Project Glasswing added 2026-05-28 (SB-86 chain count fix; total now 16).
+# 15 vendors originally; CrewAI confirmed 16th.
+# Anthropic Project Glasswing added 2026-05-28 (16th vendor confirmed; total now 16).
 # Link target: WRG-11/WinstonRedGuard monorepo (public research notes).
 # HTML entities used for arrows to avoid encoding issues in static page.
 _DISCLOSURE_CHAIN_HTML = """\
   <div class="info-card">
-    <h3>&#x1F510; Active disclosure chain <span style="font-weight:400;color:#57606a;font-size:0.85em">(16 vendors R60&#x2192;R82)</span></h3>
+    <h3>&#x1F510; Active disclosure chain <span style="font-weight:400;color:#57606a;font-size:0.85em">(16-vendor coordinated chain)</span></h3>
     <p class="vendor-chain">
       <span class="vendor-chip">Mullvad</span> &#x2192;
       <span class="vendor-chip">Mozilla</span> &#x2192;
@@ -847,7 +847,7 @@ _DISCLOSURE_CHAIN_HTML = """\
 _CHANNEL_SECTION_HTML = """\
 <h2 class="section-heading">MCP marketplace distribution</h2>
 <p style="font-size:0.85em;color:#57606a;margin:0.3em 0 0.8em;"><strong>wrg-sigma-rules</strong> is
-the only sigma detection plugin submitted to the Anthropic Claude Code marketplace. Live on 3 of 5
+a sigma detection plugin (runtime TTP focus) submitted to the Anthropic Claude Code marketplace. Live on 3 of 5
 target distribution channels (Glama, awesome-mcp-servers, MCP Registry); Docker MCP Catalog <a href="https://github.com/docker/mcp-registry/pull/3836" style="color:inherit">PR #3836</a> open; Anthropic CC listing pending. Verified 2026-05-28.</p>
 <table class="ch-matrix">
   <thead>
