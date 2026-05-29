@@ -531,9 +531,8 @@ tr:hover td { background: #fafbfc; }
   vertical-align: middle;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
-/* R89-18a enhancement B: marketplace channel chips. Sister of license-chip
-   styling, distinct per-channel colours so visitors associate chip-colour
-   with destination at a glance after one scan. */
+/* Marketplace channel chips. Distinct per-channel colours so visitors
+   associate chip-colour with destination at a glance after one scan. */
 .channel-chip {
   display: inline-block;
   padding: 0.05em 0.5em;
@@ -552,7 +551,7 @@ tr:hover td { background: #fafbfc; }
 .channel-chip.ch-skills            { background: #fff0e6; color: #bc4c00; }
 .channel-chip.ch-mcp-registry      { background: #d0f0e8; color: #0a6860; }
 .channel-chip.ch-other             { background: #f6f8fa; color: #57606a; }
-/* R89-18a enhancement C: stale-cache indicator on download numbers.
+/* Stale-cache indicator on download numbers.
    Small, muted, not alarming — the number is still real, just last-known. */
 .cached-tag {
   color: #8c959f;
@@ -561,18 +560,18 @@ tr:hover td { background: #fafbfc; }
   font-style: italic;
   margin-left: 0.3em;
 }
-/* R89-18a enhancement A: totals row (tfoot). Slightly bolder + bg accent
+/* Totals row (tfoot). Slightly bolder + bg accent
    to separate ecosystem-level aggregate from per-package rows. */
 tfoot tr.totals td       { background: #f6f8fa; border-top: 2px solid #d0d7de; padding-top: 0.8em; padding-bottom: 0.8em; }
 tfoot tr.totals strong   { font-size: 1.0em; }
 tfoot tr.totals .totals-sub { color: #6e7781; font-size: 0.78em; font-weight: 400; margin-left: 0.3em; }
-/* R89-58f: test-coverage % column. Green/amber/red thresholds.
+/* Test-coverage % column. Green/amber/red thresholds.
    Glama score rendered mono so the A/A/B grade letters align cleanly. */
 .cov-high  { color: #1a7f37; font-weight: 600; font-variant-numeric: tabular-nums; }
 .cov-mid   { color: #9a6700; font-weight: 600; font-variant-numeric: tabular-nums; }
 .cov-low   { color: #cf222e; font-weight: 600; font-variant-numeric: tabular-nums; }
 .glama-score { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.88em; }
-/* R89-60f Phase 3: search/filter bar + mobile table scroll.
+/* Search/filter bar + mobile table scroll.
    Vanilla JS progressively enhances; table is fully readable without JS. */
 .filter-bar { display: flex; gap: 0.6em; margin: 0.6em 0 0.4em; flex-wrap: wrap; align-items: center; }
 .filter-bar input, .filter-bar select { padding: 0.35em 0.6em; border: 1px solid #d0d7de; border-radius: 6px; font-size: 0.9em; font-family: inherit; background: #fff; }
@@ -584,9 +583,8 @@ tfoot tr.totals .totals-sub { color: #6e7781; font-size: 0.78em; font-weight: 40
   body { padding: 0 0.5em; }
   th, td { padding: 0.4em 0.5em; font-size: 0.85em; }
 }
-/* R89-59f Phase 2: brand + narrative section styles.
-   Anti-spam discipline (Pattern 35 sister): no email-capture / upsell;
-   informational links only. */
+/* Brand + narrative section styles.
+   No email-capture / upsell; informational links only. */
 .section-heading { font-size: 1em; font-weight: 600; margin-top: 2em; margin-bottom: 0.5em; color: #24292f; border-bottom: 1px solid #eaeef2; padding-bottom: 0.3em; }
 /* Marketplace channel matrix (Section 1) */
 .ch-matrix th, .ch-matrix td { font-size: 0.85em; }
@@ -612,12 +610,12 @@ tfoot tr.totals .totals-sub { color: #6e7781; font-size: 0.78em; font-weight: 40
 /* Vendor chips in disclosure chain (Section 5) */
 .vendor-chain { font-size: 0.83em; color: #57606a; margin: 0.3em 0; line-height: 2.0; word-break: break-word; }
 .vendor-chip { display: inline-block; background: #eaeef2; border-radius: 3px; padding: 0 0.35em; margin: 0.05em 0.1em; font-size: 0.9em; color: #24292f; white-space: nowrap; }
-/* R89-60f Feature 2: sortable column headers — sort direction indicator. */
+/* Sortable column headers — sort direction indicator. */
 th.sortable::after { content: ' \2195'; color: #8c959f; font-size: 0.8em; }
 th.sortable[data-sort-dir=asc]::after { content: ' \2191'; color: #0969da; }
 th.sortable[data-sort-dir=desc]::after { content: ' \2193'; color: #0969da; }
-/* R89-60f Feature 4: stale > 24h banner (JS-injected when body.data-generated-at is old).
-   SB-65 sister: surface stale data explicitly rather than silently showing old numbers. */
+/* Stale > 24h banner (JS-injected when body.data-generated-at is old).
+   Surfaces stale data explicitly rather than silently showing old numbers. */
 .stale-banner { background: #fff8c5; border: 1px solid #d4a72c; border-radius: 6px; padding: 0.6em 1em; margin: 0.6em 0; font-size: 0.87em; color: #633d11; }
 """
 
