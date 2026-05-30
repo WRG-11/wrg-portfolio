@@ -778,6 +778,13 @@ _MILESTONE_BANNER = """\
     <li>New detection pattern formalized &#x2014; &#x201C;silent semantic violation&#x201D;: systems that pass infrastructure/auth checks while violating intent (phishing via account-recovery flows; grey-market AI API supply chains)</li>
     <li>A recurring cross-vendor threat pattern is now tracked across 18 documented field cases</li>
   </ul>
+  <strong>&#x1F4E6; 2026-05-29 &#x2013; 2026-05-30 milestones</strong>
+  <ul>
+    <li>Bot Observatory pipeline live &#x2014; first weekly digest generated from real market data (baseline; detection-accuracy refinement in progress)</li>
+    <li>Repo-wide test coverage measured &#x2014; ~93% average statement coverage across 38 application packages</li>
+    <li>Meta-monitoring cohort activated &#x2014; autonomous inbox-growth sentry now live on a daily schedule (built, registered, and emitting)</li>
+    <li>instinct hosted deployment repaired &#x2014; repository namespace transfer completed (org consolidation) and container SSE network-reachability fix shipped; hosted MCP rebuild in progress</li>
+  </ul>
 </div>"""
 
 
