@@ -59,11 +59,20 @@ class TestQueryPypiVersion:
 
 
 class TestQueryGithubRelease:
-    def test_no_releases_raises(self) -> None:
-        """404 for releases endpoint → payload is None → ValueError('No GitHub Releases')."""
+    def test_no_releases_returns_none(self) -> None:
+        """404 for releases endpoint → payload None → returns None (benign
+        pre-release state), NOT a raise. A GitHub-only target with no
+        releases yet must not red the daily sentry. R89-95a regression."""
         with patch.object(version_sentry, "_fetch_json", return_value=None):
-            with pytest.raises(ValueError, match="No GitHub Releases"):
-                version_sentry._query_github_release("WRG-11/no-releases")
+            assert version_sentry._query_github_release("WRG-11/no-releases") is None
+
+    def test_malformed_release_still_raises(self) -> None:
+        """200 response missing tag_name → ValueError (degraded API) → ERROR.
+        A genuine malformed response is still a hard failure, unlike a
+        plain 'no releases yet' 404."""
+        with patch.object(version_sentry, "_fetch_json", return_value={"foo": "bar"}):
+            with pytest.raises(ValueError, match="missing tag_name"):
+                version_sentry._query_github_release("WRG-11/malformed")
 
 
 class TestCheckTarget:
@@ -104,15 +113,34 @@ class TestCheckTarget:
             finding = version_sentry._check_target(target)
         assert finding["status"] == "INCOMPLETE"
 
+    def test_no_releases_is_incomplete_not_error(self) -> None:
+        """GitHub-only target (pypi_name=None) whose repo has no releases yet
+        → gh_release None → INCOMPLETE (benign), NOT ERROR. End-to-end
+        repro of the daily-red + drift-issue-spam (arastirma-ussu): a
+        pre-release repo's missing GitHub Release must not trip exit 1.
+        R89-95a regression — exercises the real _query_github_release
+        path via _fetch_json → None."""
+        target = {
+            "name": "arastirma-ussu",
+            "pypi_name": None,
+            "gh_repo": "WRG-11/arastirma-ussu",
+        }
+        with patch.object(version_sentry, "_fetch_json", return_value=None):
+            finding = version_sentry._check_target(target)
+        assert finding["status"] == "INCOMPLETE"
+        assert finding["status"] != "ERROR"
+
     def test_github_query_error_recorded(self) -> None:
-        """GitHub query failure → status ERROR with 'github' in error message."""
+        """A *genuine* GitHub query failure (network/malformed) → status
+        ERROR with 'github' in the error message. (No-releases-yet is now
+        benign INCOMPLETE — see test_no_releases_is_incomplete_not_error.)"""
         target = {"name": "x", "pypi_name": "x", "gh_repo": "WRG-11/x"}
         with (
             patch.object(version_sentry, "_query_pypi_version", return_value="1.0.0"),
             patch.object(
                 version_sentry,
                 "_query_github_release",
-                side_effect=ValueError("No GitHub Releases for: WRG-11/x"),
+                side_effect=ValueError("network unavailable fetching releases/latest"),
             ),
         ):
             finding = version_sentry._check_target(target)

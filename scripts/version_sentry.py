@@ -110,15 +110,31 @@ def _query_pypi_version(name: str) -> str:
     return _normalize_version(version)
 
 
-def _query_github_release(repo: str) -> str:
+def _query_github_release(repo: str) -> str | None:
     """Fetch latest GitHub Release tag (NOT just latest tag) for owner/repo.
 
-    R89-14b H PF-003 sister: same defensive .get walk applied to the
+    Returns None when the repo has no published GitHub Releases yet
+    (``/releases/latest`` → 404). That is a benign *pre-release* state
+    for GitHub-only targets (``pypi_name=null``), NOT a query failure:
+    the caller records gh_release=None → INCOMPLETE, never ERROR, so a
+    not-yet-released repo does not red the daily sentry or open a drift
+    issue. A *malformed* 200 (missing ``tag_name``) still raises, as do
+    network/HTTP errors surfaced by ``_fetch_json``.
+
+    R89-95a: previously raised ``ValueError("No GitHub Releases")`` on
+    404, which ``_check_target`` classified as ERROR → exit 1 +
+    daily duplicate drift-issue spam for the pre-release arastirma-ussu
+    target. Distinguishing "no releases yet" (benign) from a genuine
+    query failure is the fix.
+
+    R89-14b H PF-003 sister: defensive .get walk applied to the
     GitHub Releases payload (``tag_name`` missing on partial responses).
     """
     payload = _fetch_json(f"https://api.github.com/repos/{repo}/releases/latest", accept_404=True)
     if payload is None:
-        raise ValueError(f"No GitHub Releases for: {repo}")
+        # No GitHub Release published yet — benign pre-release state.
+        # Caller treats gh_release=None as INCOMPLETE (not ERROR).
+        return None
     tag_name = payload.get("tag_name") if isinstance(payload, dict) else None
     if not tag_name:
         raise ValueError(
