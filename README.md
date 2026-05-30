@@ -30,7 +30,7 @@ Snapshot summary at the top: `N OK | N DRIFT | N with query errors`. Footer note
 
 ## Why this exists
 
-Maintaining a multi-package open-source ecosystem (5+ PyPI packages, sister GitHub repos) creates recurring drift problems:
+Maintaining a multi-package open-source ecosystem (multiple PyPI packages + sister GitHub repos) creates recurring drift problems:
 
 - **PyPI version vs GitHub Release tag drift** — you `pip install` a package, but the GitHub Release doesn't match (forgot to tag, or vice versa)
 - **Scattered package health visibility** — checking downloads/stars/last-commit across 5+ repos requires 5+ browser tabs
